@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 using System.Diagnostics;
+using Farkle.Builder.OperatorPrecedence;
 using Farkle.Grammars;
 using Farkle.Grammars.StateMachines;
 
@@ -10,11 +11,11 @@ namespace Farkle.Builder.Lr;
 /// <summary>
 /// Resolves conflicts from an <see cref="LrStateMachine"/>.
 /// </summary>
-internal sealed class ConflictResolvingLrStateMachine(LrStateMachine stateMachine, LrConflictResolver conflictResolver) : LrStateMachine
+internal sealed class ConflictResolvingLrStateMachine(LrStateMachine stateMachine, OperatorInfoProvider infoProvider) : LrStateMachine
 {
     public LrStateMachine InnerStateMachine { get; } = stateMachine;
 
-    public LrConflictResolver ConflictResolver { get; } = conflictResolver;
+    public OperatorInfoProvider OperatorInfoProvider { get; } = infoProvider;
 
     public override int StateCount => InnerStateMachine.StateCount;
 
@@ -62,7 +63,7 @@ internal sealed class ConflictResolvingLrStateMachine(LrStateMachine stateMachin
             {
                 if (existingActions.TryGetValue(symbol, out var existingActionsOfTerminal) && existingActionsOfTerminal is [.., var existingAction])
                 {
-                    switch (ConflictResolver.ResolveConflict(symbol, existingAction, action))
+                    switch (LrBuild.ResolveConflict(OperatorInfoProvider, symbol, existingAction, action))
                     {
                         // The new action has a lower priority. Keep the existing actions.
                         case LrConflictResolverDecision.ChooseOption1:
@@ -97,7 +98,7 @@ internal sealed class ConflictResolvingLrStateMachine(LrStateMachine stateMachin
             Debug.Assert(isEof);
             if (existingEndOfFileActions is [.., var existingEndOfFileAction])
             {
-                switch (ConflictResolver.ResolveEndOfFileConflict(existingEndOfFileAction, endOfFileAction))
+                switch (LrBuild.ResolveEndOfFileConflict(OperatorInfoProvider, existingEndOfFileAction, endOfFileAction))
                 {
                     // The new action has a lower priority. Keep the existing actions.
                     case LrConflictResolverDecision.ChooseOption1:

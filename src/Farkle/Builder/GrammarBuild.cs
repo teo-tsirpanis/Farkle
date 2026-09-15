@@ -5,6 +5,7 @@ using System.Collections.Immutable;
 using System.Numerics;
 using Farkle.Builder.Dfa;
 using Farkle.Builder.Lr;
+using Farkle.Builder.OperatorPrecedence;
 using Farkle.Diagnostics;
 using Farkle.Diagnostics.Builder;
 using Farkle.Grammars;
@@ -331,10 +332,10 @@ internal static class GrammarBuild
 
         if ((outputs & BuilderOutputs.GrammarLrStateMachine) != 0)
         {
-            var conflictResolver = operatorScope is not null
-                ? new OperatorScopeConflictResolver(operatorScope, operatorSymbolMap!, literalsCaseInsensitive, log)
+            var operatorInfoProvider = operatorScope is not null
+                ? new OperatorInfoProvider(operatorScope, operatorSymbolMap!, grammarDefinition.SymbolIdentityObjectComparer, log)
                 : null;
-            writer.AddStateMachine(LrBuild.Build(writer, globalOptions.ParserGenerationAlgorithm, conflictResolver, log, options.CancellationToken));
+            writer.AddStateMachine(LrBuild.Build(writer, globalOptions.ParserGenerationAlgorithm, operatorInfoProvider, log, options.CancellationToken));
         }
 
         // Farkle's builder can be trusted to not produce malformed grammars, so we can skip content validation.

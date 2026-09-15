@@ -4,19 +4,17 @@
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
-using Farkle.Builder.OperatorPrecedence;
 using Farkle.Diagnostics.Builder;
 using Farkle.Grammars;
 
-namespace Farkle.Builder.Lr;
+namespace Farkle.Builder.OperatorPrecedence;
 
 /// <summary>
-/// Provides an implementation of <see cref="LrConflictResolver"/> that resolves
-/// conflicts based on operator precedence and associativity (P&amp;A).
+/// Provides precedence and associativity (P&amp;A) information for terminals and productions in a grammar.
 /// </summary>
-internal sealed class OperatorScopeConflictResolver : LrConflictResolver
+internal sealed class OperatorInfoProvider
 {
-    private readonly OperatorScope _operatorScope;
+    public OperatorScope OperatorScope { get; }
 
     // Maps symbols (terminals or nonterminals) to their builder object representation.
     private readonly IReadOnlyDictionary<EntityHandle, object> _objectMap;
@@ -27,10 +25,6 @@ internal sealed class OperatorScopeConflictResolver : LrConflictResolver
     // Caches the computed precedence level of symbol handles.
     // The precedence level is -1 if the symbol has no precedence information.
     private readonly Dictionary<EntityHandle, int> _symbolPrecedenceCache = [];
-
-    private const LrConflictResolverDecision ChooseShift = LrConflictResolverDecision.ChooseOption1;
-
-    private const LrConflictResolverDecision ChooseReduce = LrConflictResolverDecision.ChooseOption2;
 
     private int TryGetPrecedenceSlow(EntityHandle handle)
     {
@@ -62,31 +56,10 @@ internal sealed class OperatorScopeConflictResolver : LrConflictResolver
         return -1;
     }
 
-    private bool TryGetPrecedenceInfo(EntityHandle symbol, out int precedence, out AssociativityType associativity)
-    {
-        if (!_symbolPrecedenceCache.TryGetValue(symbol, out precedence))
-        {
-            precedence = TryGetPrecedenceSlow(symbol);
-            _symbolPrecedenceCache.Add(symbol, precedence);
-        }
-        if (precedence < 0)
-        {
-            associativity = AssociativityType.NonAssociative;
-            return false;
-        }
-        associativity = _operatorScope.AssociativityGroups[precedence].AssociativityType;
-        return true;
-    }
-
-    public OperatorScopeConflictResolver(OperatorScope operatorScope, IReadOnlyDictionary<EntityHandle, object> objectMap,
-        bool literalsCaseSensitive, BuilderLogger log = default)
-        : this(operatorScope, objectMap, Utilities.GetFallbackStringComparer(literalsCaseSensitive), log)
-    { }
-
-    public OperatorScopeConflictResolver(OperatorScope operatorScope, IReadOnlyDictionary<EntityHandle, object> objectMap,
+    public OperatorInfoProvider(OperatorScope operatorScope, IReadOnlyDictionary<EntityHandle, object> objectMap,
         IEqualityComparer<object> symbolIdentityObjectComparer, BuilderLogger log = default)
     {
-        _operatorScope = operatorScope;
+        OperatorScope = operatorScope;
         _objectMap = objectMap;
         _precedenceMap = new Dictionary<object, int>(objectMap.Count, new OperatorSymbolEqualityComparer(symbolIdentityObjectComparer));
         for (int i = 0; i < operatorScope.AssociativityGroups.Length; i++)
@@ -109,60 +82,15 @@ internal sealed class OperatorScopeConflictResolver : LrConflictResolver
         }
     }
 
-    public override bool HasPrecedenceInfo(EntityHandle symbol) => TryGetPrecedenceInfo(symbol, out _, out _);
-
-    public override LrConflictResolverDecision ResolveShiftReduceConflict(TokenSymbolHandle shiftTerminal, ProductionHandle reduceProduction)
+    public int GetPrecedence(EntityHandle symbol)
     {
-        if (!TryGetPrecedenceInfo(shiftTerminal, out int shiftPrecedence, out AssociativityType shiftAssociativity)
-            || !TryGetPrecedenceInfo(reduceProduction, out int reducePrecedence, out AssociativityType reduceAssociativity))
+        Debug.Assert(symbol.IsTokenSymbol || symbol.IsProduction);
+        if (!_symbolPrecedenceCache.TryGetValue(symbol, out int precedence))
         {
-            return LrConflictResolverDecision.CannotChoose;
+            precedence = TryGetPrecedenceSlow(symbol);
+            _symbolPrecedenceCache.Add(symbol, precedence);
         }
-        if (shiftPrecedence > reducePrecedence)
-        {
-            return ChooseShift;
-        }
-        if (shiftPrecedence < reducePrecedence)
-        {
-            return ChooseReduce;
-        }
-        // If the symbols have the same precedence, we resolve the conflict based on associativity.
-        // The symbols are on the same associativity group, so they have the same associativity.
-        Debug.Assert(shiftAssociativity == reduceAssociativity);
-        switch (shiftAssociativity)
-        {
-            case AssociativityType.LeftAssociative:
-                return ChooseReduce;
-            case AssociativityType.RightAssociative:
-                return ChooseShift;
-            case AssociativityType.NonAssociative:
-                return LrConflictResolverDecision.ChooseNeither;
-            default:
-                Debug.Assert(shiftAssociativity == AssociativityType.PrecedenceOnly);
-                return LrConflictResolverDecision.CannotChoose;
-        }
-    }
-
-    public override LrConflictResolverDecision ResolveReduceReduceConflict(ProductionHandle production1, ProductionHandle production2)
-    {
-        if (!_operatorScope.CanResolveReduceReduceConflicts)
-        {
-            return LrConflictResolverDecision.CannotChoose;
-        }
-        if (!TryGetPrecedenceInfo(production1, out int precedence1, out _)
-            || !TryGetPrecedenceInfo(production2, out int precedence2, out _))
-        {
-            return LrConflictResolverDecision.CannotChoose;
-        }
-        if (precedence1 > precedence2)
-        {
-            return LrConflictResolverDecision.ChooseOption1;
-        }
-        if (precedence1 < precedence2)
-        {
-            return LrConflictResolverDecision.ChooseOption2;
-        }
-        return LrConflictResolverDecision.CannotChoose;
+        return precedence;
     }
 
     /// <summary>

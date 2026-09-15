@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 using System.Collections.Immutable;
+using Farkle.Builder.OperatorPrecedence;
 using Farkle.Diagnostics.Builder;
 using Farkle.Grammars.Writers;
 
@@ -15,17 +16,17 @@ internal readonly partial struct LrBuild
 {
     private readonly AugmentedSyntaxProvider Syntax;
 
-    private readonly LrConflictResolver? ConflictResolver;
+    private readonly OperatorInfoProvider? OperatorInfoProvider;
 
     private readonly CancellationToken CancellationToken;
 
     private readonly BuilderLogger Log;
 
-    private LrBuild(IGrammarSyntaxProvider syntax, LrConflictResolver? conflictResolver, BuilderLogger log,
+    private LrBuild(IGrammarSyntaxProvider syntax, OperatorInfoProvider? operatorInfoProvider, BuilderLogger log,
         CancellationToken cancellationToken)
     {
         Syntax = new(syntax);
-        ConflictResolver = conflictResolver;
+        OperatorInfoProvider = operatorInfoProvider;
         CancellationToken = cancellationToken;
         Log = log;
     }
@@ -35,12 +36,12 @@ internal readonly partial struct LrBuild
     /// </summary>
     /// <param name="syntax">The syntax of the grammar.</param>
     /// <param name="algorithm">The algorithm to use (LALR or IELR).</param>
-    /// <param name="conflictResolver">The conflict resolver to use. Optional.</param>
+    /// <param name="operatorInfoProvider">The operator info provider to use. Optional.</param>
     /// <param name="log">Used to log events in the building process.</param>
     /// <param name="cancellationToken">Used to cancel the building process.</param>
     public static LrWriter Build(IGrammarSyntaxProvider syntax, ParserGenerationAlgorithm algorithm,
-        LrConflictResolver? conflictResolver = null, BuilderLogger log = default, CancellationToken cancellationToken = default) =>
-        new LrBuild(syntax, conflictResolver, log, cancellationToken).Build(algorithm);
+        OperatorInfoProvider? operatorInfoProvider = null, BuilderLogger log = default, CancellationToken cancellationToken = default) =>
+        new LrBuild(syntax, operatorInfoProvider, log, cancellationToken).Build(algorithm);
 
     private LrWriter Build(ParserGenerationAlgorithm algorithm)
     {
@@ -92,9 +93,9 @@ internal readonly partial struct LrBuild
             }
         }
 
-        if (ConflictResolver is not null)
+        if (OperatorInfoProvider is not null)
         {
-            stateMachine = new ConflictResolvingLrStateMachine(stateMachine, ConflictResolver);
+            stateMachine = new ConflictResolvingLrStateMachine(stateMachine, OperatorInfoProvider);
         }
         return stateMachine.ToLrWriter();
 

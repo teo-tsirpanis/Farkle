@@ -2,60 +2,13 @@
 // SPDX-License-Identifier: MIT
 
 using System.Collections.Immutable;
-using System.Diagnostics;
 using BitCollections;
 using Farkle.Collections;
-using static Farkle.Builder.Lr.AugmentedSyntaxProvider;
 
 namespace Farkle.Builder.Lr;
 
 partial struct LrBuild
 {
-    /// <summary>
-    /// Wraps <see cref="LrConflictResolver.HasPrecedenceInfo"/> to work with LR builder types.
-    /// </summary>
-    private bool HasPrecedenceInfo(Symbol symbol, LrConflictContribution contribution)
-    {
-        Debug.Assert(symbol.IsTerminal);
-        if (ConflictResolver is null)
-        {
-            return false;
-        }
-        if (contribution.IsAccept)
-        {
-            return false;
-        }
-        return ConflictResolver.HasPrecedenceInfo(contribution.IsReduce(out Production production) ? TranslateProduction(production) : TranslateTerminal(symbol));
-    }
-
-    /// <summary>
-    /// Resolves a conflict between two contributions when encountering the given symbol.
-    /// </summary>
-    /// <remarks>
-    /// This method is intended to be used inside the IELR algorithm. For the final conflict
-    /// resolution at the end of building a grammar, use <see cref="ConflictResolvingLrStateMachine"/>.
-    /// </remarks>
-    private LrConflictResolverDecision ResolveConflict(Symbol conflictSymbol, LrConflictContribution contribution1, LrConflictContribution contribution2)
-    {
-        Debug.Assert(conflictSymbol.IsTerminal);
-        if (ConflictResolver is null)
-        {
-            return LrConflictResolverDecision.CannotChoose;
-        }
-        if (contribution1.IsAccept || contribution2.IsAccept)
-        {
-            Debug.Assert(!(contribution1.IsAccept && contribution2.IsAccept), "Accept/Accept conflict is not possible");
-            // Accept/Reduce conflicts cannot be resolved.
-            return LrConflictResolverDecision.CannotChoose;
-        }
-        if (conflictSymbol.Index == EndSymbolIndex)
-        {
-            return ConflictResolver.ResolveEndOfFileConflict(TranslateEndOfFileConflictContribution(contribution1), TranslateEndOfFileConflictContribution(contribution2));
-        }
-        return ConflictResolver.ResolveConflict(TranslateTerminal(conflictSymbol),
-            TranslateConflictContribution(contribution1), TranslateConflictContribution(contribution2));
-    }
-
     private ImmutableArray<BitArrayNeo> ComputePredecessors(Lr0StateMachine stateMachine)
     {
         int stateCount = stateMachine.States.Length;
@@ -213,14 +166,5 @@ partial struct LrBuild
             }
         }
         return conflicts.DrainToImmutable();
-    }
-
-    private readonly struct ConflictDescription(int stateIndex, Symbol symbol, ImmutableArray<LrConflictContribution> contributions)
-    {
-        public int StateIndex { get; } = stateIndex;
-
-        public Symbol Symbol { get; } = symbol;
-
-        public ImmutableArray<LrConflictContribution> Contributions { get; } = contributions;
     }
 }

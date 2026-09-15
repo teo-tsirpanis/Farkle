@@ -45,8 +45,7 @@ internal sealed class GrammarDefinition
     /// An equality comparer that compares the objects returned by
     /// <see cref="GetSymbolIdentityObject"/>.
     /// </summary>
-    public IEqualityComparer<object> SymbolIdentityObjectComparer =>
-        Utilities.GetFallbackStringComparer(GlobalOptions.CaseSensitivity is CaseSensitivity.CaseSensitive);
+    public required IEqualityComparer<object> SymbolIdentityObjectComparer { get; init; }
 
     private GrammarDefinition(in GrammarGlobalOptions globalOptions)
     {
@@ -122,6 +121,7 @@ internal sealed class GrammarDefinition
             Nonterminals = nonterminals,
             Productions = productions,
             SpecialNames = specialNames,
+            SymbolIdentityObjectComparer = symbolIdentityComparer,
         };
 
         void Visit(IGrammarSymbol symbol)

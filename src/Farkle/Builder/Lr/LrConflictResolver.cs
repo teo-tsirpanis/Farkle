@@ -2,75 +2,165 @@
 // SPDX-License-Identifier: MIT
 
 using System.Diagnostics;
-using Farkle.Grammars;
-using Farkle.Grammars.StateMachines;
+using Farkle.Builder.OperatorPrecedence;
+using static Farkle.Builder.Lr.AugmentedSyntaxProvider;
 
 namespace Farkle.Builder.Lr;
 
 /// <summary>
-/// Contains the logic to resolve LR conflicts.
+/// Contains the logic to resolve an LR conflict.
 /// </summary>
-// TODO-PERF: This needs to be refactored to improve performance, now that it's used more frequently with IELR.
-// One idea is to convert the class into a precedence and associativity provider, and have the LR builder
-// compare them and handle conflicts.
-internal abstract class LrConflictResolver
+/// <remarks>
+/// This is a stateful value type that keeps track of a figurative set of dominant contributions to the conflict
+/// (known as the <em>dominant set</em>). The complete dominant set is not held by this type; for each contribution
+/// that gets considered, the resolver indicates to the caller what operation to perform to the dominant set.
+/// </remarks>
+internal struct LrConflictResolver(OperatorInfoProvider? infoProvider)
 {
-    /// <summary>
-    /// Returns whether the given terminal or production has precedence and associativity information.
-    /// </summary>
-    /// <param name="symbol">The symbol to check.</param>
-    public abstract bool HasPrecedenceInfo(EntityHandle symbol);
+    private readonly OperatorInfoProvider? _infoProvider = infoProvider;
+
+    private int _dominantPrecedence = -1;
+
+    private AssociativityType _dominantAssociativity;
+
+    private bool _hasShift, _hasConflictInDominantSet, _hasShiftInDominantSet, _hasRemovedShiftFromDominantSet;
+
+#if DEBUG
+    private bool _seenContribution, _seenAccept;
+#endif
 
     /// <summary>
-    /// Resolves a Shift-Reduce conflict.
+    /// Records a <see cref="LrConflictContribution"/> to the conflict and updates the dominant set accordingly.
     /// </summary>
-    /// <param name="shiftTerminal">The terminal on which the action will be taken.</param>
-    /// <param name="reduceProduction">The production to reduce.</param>
-    public abstract LrConflictResolverDecision ResolveShiftReduceConflict(TokenSymbolHandle shiftTerminal, ProductionHandle reduceProduction);
+    /// <param name="conflictSymbol">The symbol at which the conflict occurs.</param>
+    /// <param name="contribution">The contribution to the conflict being considered.</param>
+    public LrConflictResolverDecision Add(Symbol conflictSymbol, LrConflictContribution contribution) =>
+        Add(conflictSymbol, contribution, out _);
 
     /// <summary>
-    /// Resolves a Reduce-Reduce conflict.
+    /// Records a <see cref="LrConflictContribution"/> to the conflict and updates the dominant set accordingly.
     /// </summary>
-    /// <param name="production1">The first possible production to reduce.</param>
-    /// <param name="production2">The second possible production to reduce.</param>
-    /// <remarks>
-    /// This method may not return <see cref="LrConflictResolverDecision.ChooseNeither"/>.
-    /// When resolving Reduce-Reduce conflicts, the productions' associativity are not
-    /// taken into account.
-    /// </remarks>
-    public abstract LrConflictResolverDecision ResolveReduceReduceConflict(ProductionHandle production1, ProductionHandle production2);
-
-    public LrConflictResolverDecision ResolveConflict(TokenSymbolHandle terminal, LrAction action1, LrAction action2)
+    /// <param name="conflictSymbol">The symbol at which the conflict occurs.</param>
+    /// <param name="contribution">The contribution to the conflict being considered.</param>
+    /// <param name="precedence">The precedence of <paramref name="contribution"/>, or -1 if it has no precedence information.</param>
+    /// <remarks></remarks>
+    public LrConflictResolverDecision Add(Symbol conflictSymbol, LrConflictContribution contribution, out int precedence)
     {
-        switch (action1.IsShift, action2.IsShift)
+#if DEBUG
+        // This also detects Shift/Shift conflicts, which are not possible.
+        Debug.Assert(!contribution.IsShift(out _) || !_seenContribution, "The Shift contribution must be added before any other contributions");
+        _seenContribution = true;
+#endif
+        if (contribution.IsShift(out _))
         {
-            case (true, true):
-                Debug.Fail("Shift/Shift conflict is not possible");
-                return LrConflictResolverDecision.ChooseOption1;
-            case (true, false):
-                return ResolveShiftReduceConflict(terminal, action2.ReduceProduction);
-            case (false, true):
-                return Invert(ResolveShiftReduceConflict(terminal, action1.ReduceProduction));
-            case (false, false):
-                return ResolveReduceReduceConflict(action1.ReduceProduction, action2.ReduceProduction);
+            Debug.Assert(conflictSymbol.Index != EndSymbolIndex);
+            _hasShift = true;
         }
 
-        static LrConflictResolverDecision Invert(LrConflictResolverDecision decision) => decision switch
+        if (contribution.IsAccept)
         {
-            LrConflictResolverDecision.ChooseOption1 => LrConflictResolverDecision.ChooseOption2,
-            LrConflictResolverDecision.ChooseOption2 => LrConflictResolverDecision.ChooseOption1,
-            _ => decision
-        };
+#if DEBUG
+            Debug.Assert(!_seenAccept, "Accept/Accept conflict is not possible");
+            _seenAccept = true;
+#endif
+            precedence = -1;
+            return LrConflictResolverDecision.NoPrecedence;
+        }
+        if (_infoProvider is null)
+        {
+            precedence = -1;
+            return LrConflictResolverDecision.NoPrecedence;
+        }
+        precedence = _infoProvider.GetPrecedence(contribution.IsReduce(out Production production) ? TranslateProduction(production) : TranslateTerminal(conflictSymbol));
+        if (precedence < 0)
+        {
+            // The contribution has no precedence information.
+            return LrConflictResolverDecision.NoPrecedence;
+        }
+        if (_dominantPrecedence == -1)
+        {
+            // This is the first contribution that we see.
+            _dominantPrecedence = precedence;
+            if (contribution.IsShift(out _))
+            {
+                _dominantAssociativity = _infoProvider.OperatorScope.AssociativityGroups[precedence].AssociativityType;
+                _hasShiftInDominantSet = true;
+            }
+            else if (!_infoProvider.OperatorScope.CanResolveReduceReduceConflicts)
+            {
+                precedence = -1;
+                return LrConflictResolverDecision.NoPrecedence;
+            }
+            return LrConflictResolverDecision.CreateNewDominantSet;
+        }
+        if (!_hasShift && !_infoProvider.OperatorScope.CanResolveReduceReduceConflicts)
+        {
+            // The operator scope cannot resolve Reduce/Reduce conflicts.
+            precedence = -1;
+            return LrConflictResolverDecision.NoPrecedence;
+        }
+        if (precedence < _dominantPrecedence)
+        {
+            return LrConflictResolverDecision.Ignore;
+        }
+        if (precedence == _dominantPrecedence)
+        {
+            _hasConflictInDominantSet = true;
+            if (_hasShiftInDominantSet)
+            {
+                switch (_dominantAssociativity)
+                {
+                    case AssociativityType.RightAssociative:
+                        return LrConflictResolverDecision.Ignore;
+                    case AssociativityType.LeftAssociative when !_hasRemovedShiftFromDominantSet:
+                        // If we have a shift-reduce conflict with same precedence and left associativity, we
+                        _hasRemovedShiftFromDominantSet = true;
+                        return LrConflictResolverDecision.CreateNewDominantSet;
+                    case AssociativityType.NonAssociative:
+                        return LrConflictResolverDecision.ClearDominantSet;
+                }
+            }
+            return LrConflictResolverDecision.AddToDominantSet;
+        }
+        _dominantPrecedence = precedence;
+        if (!_hasShift)
+        {
+            // We don't care about associativity in Reduce/Reduce conflicts.
+            _dominantAssociativity = _infoProvider.OperatorScope.AssociativityGroups[precedence].AssociativityType;
+        }
+        _hasConflictInDominantSet = false;
+        _hasShiftInDominantSet = false;
+        _hasRemovedShiftFromDominantSet = false;
+        return LrConflictResolverDecision.CreateNewDominantSet;
     }
 
-    public LrConflictResolverDecision ResolveEndOfFileConflict(LrEndOfFileAction action1, LrEndOfFileAction action2)
+    /// <summary>
+    /// Returns whether an <see cref="LrConflictContribution"/> is contained in the dominant set.
+    /// The contribution must have been previously passed to <see cref="Add(Symbol, LrConflictContribution, out int)"/>.
+    /// </summary>
+    public readonly bool ContainsInDominantSet(LrConflictContribution contribution, int precedence)
     {
-        if (action1.IsAccept || action2.IsAccept)
+        if (precedence < 0)
         {
-            Debug.Assert(!(action1.IsAccept && action2.IsAccept), "Accept/Accept conflict is not possible");
-            // Accept/Reduce conflicts cannot be resolved.
-            return LrConflictResolverDecision.CannotChoose;
+            return true;
         }
-        return ResolveReduceReduceConflict(action1.ReduceProduction, action2.ReduceProduction);
+        if (precedence < _dominantPrecedence)
+        {
+            return false;
+        }
+        Debug.Assert(precedence == _dominantPrecedence);
+        if (_hasConflictInDominantSet && _hasShiftInDominantSet)
+        {
+            switch (_dominantAssociativity)
+            {
+                case AssociativityType.LeftAssociative:
+                    return contribution.IsReduce(out _);
+                case AssociativityType.RightAssociative:
+                    return !contribution.IsReduce(out _);
+                case AssociativityType.NonAssociative:
+                    return false;
+            }
+        }
+        return true;
     }
 }

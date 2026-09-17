@@ -338,7 +338,7 @@ partial struct LrBuild
             return false;
         }
 
-        var conflictResolver = new ConflictResolverNeo(OperatorInfoProvider);
+        var conflictResolver = new LrConflictResolver(OperatorInfoProvider);
         for (int i = 0; i < conflict.Contributions.Length; i++)
         {
             var candidateContribution = conflict.Contributions[i];
@@ -357,19 +357,19 @@ partial struct LrBuild
             // track of which contributions are dominant.
             switch (conflictResolver.Add(conflict.Symbol, candidateContribution))
             {
-                case ConflictResolutionResult.Ignore:
+                case LrConflictResolverDecision.Ignore:
                     break;
-                case ConflictResolutionResult.AddToDominantSet:
+                case LrConflictResolverDecision.AddToDominantSet:
                     result.Add(candidateContribution);
                     break;
-                case ConflictResolutionResult.CreateNewDominantSet:
+                case LrConflictResolverDecision.CreateNewDominantSet:
                     result.Clear();
                     result.Add(candidateContribution);
                     break;
-                case ConflictResolutionResult.ClearDominantSet:
+                case LrConflictResolverDecision.ClearDominantSet:
                     result.Clear();
                     break;
-                case ConflictResolutionResult.NoPrecedence:
+                case LrConflictResolverDecision.NoPrecedence:
                     Debug.Fail("This should not happen, because we already checked that all contributions have precedence info");
                     break;
             }

@@ -2,9 +2,14 @@
 // SPDX-License-Identifier: MIT
 
 using System.Collections.Immutable;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using Farkle.Builder.OperatorPrecedence;
+using Farkle.Collections;
 using Farkle.Diagnostics.Builder;
 using Farkle.Grammars.Writers;
+using static Farkle.Builder.Lr.AugmentedSyntaxProvider;
 
 namespace Farkle.Builder.Lr;
 
@@ -59,11 +64,10 @@ internal readonly partial struct LrBuild
         PropagateGotoFollows(gotoFollowDependencies, GotoFollowDependencyKinds.Internal | GotoFollowDependencyKinds.Predecessor, gotoFollows);
         var reductionLookaheads = ComputeReductionLookaheads(lr0StateMachine, gotoFollows);
 
-        LrStateMachine stateMachine;
         if (algorithm == ParserGenerationAlgorithm.Lalr1
             || (ComputeConflicts(lr0StateMachine, reductionLookaheads) is var conflicts && conflicts is []))
         {
-            stateMachine = new DefaultLrStateMachine(lr0StateMachine, reductionLookaheads);
+            return WriteStateMachine(lr0StateMachine, reductionLookaheads);
         }
         else
         {
@@ -84,20 +88,14 @@ internal readonly partial struct LrBuild
                 PropagateGotoFollows(newGotoFollowDependencies, GotoFollowDependencyKinds.Successor | GotoFollowDependencyKinds.Internal, newGotoFollows);
                 PropagateGotoFollows(newGotoFollowDependencies, GotoFollowDependencyKinds.Internal | GotoFollowDependencyKinds.Predecessor, newGotoFollows);
                 var newReductionLookaheads = ComputeReductionLookaheads(newLr0StateMachine, newGotoFollows);
-                stateMachine = new DefaultLrStateMachine(newLr0StateMachine, newReductionLookaheads);
+                return WriteStateMachine(newLr0StateMachine, newReductionLookaheads);
             }
             else
             {
                 // No need to recompute reduction lookaheads if we didn't split any states.
-                stateMachine = new DefaultLrStateMachine(lr0StateMachine, reductionLookaheads);
+                return WriteStateMachine(lr0StateMachine, reductionLookaheads);
             }
         }
-
-        if (OperatorInfoProvider is not null)
-        {
-            stateMachine = new ConflictResolvingLrStateMachine(stateMachine, OperatorInfoProvider);
-        }
-        return stateMachine.ToLrWriter();
 
         static ImmutableArray<TerminalSet> Clone(ImmutableArray<TerminalSet> array)
         {
@@ -108,5 +106,149 @@ internal readonly partial struct LrBuild
             }
             return builder.MoveToImmutable();
         }
+    }
+
+    private LrWriter WriteStateMachine(Lr0StateMachine lr0StateMachine, GroupedIndexedList<ReductionLookahead> reductionLookaheads)
+    {
+        var writer = new LrWriter(lr0StateMachine.States.Length);
+        if (OperatorInfoProvider is null)
+        {
+            // Fast path if there's no operator info provider; we cannot resolve any conflicts if they arise.
+            for (int i = 0; i < lr0StateMachine.States.Length; i++)
+            {
+                CancellationToken.ThrowIfCancellationRequested();
+                Write_NoConflicts(in lr0StateMachine.States.ItemRef(i), reductionLookaheads.GetItemsWithKey(i));
+            }
+        }
+        else
+        {
+            var infoProvider = OperatorInfoProvider;
+            var conflictResolvers = new Dictionary<Symbol, LrConflictResolver>();
+            var precedences = new List<int>();
+            for (int i = 0; i < lr0StateMachine.States.Length; i++)
+            {
+                CancellationToken.ThrowIfCancellationRequested();
+                ref readonly var state = ref lr0StateMachine.States.ItemRef(i);
+                var reductions = reductionLookaheads.GetItemsWithKey(i);
+                // A state with no reduce actions cannot have conflicts.
+                if (reductions.IsEmpty)
+                {
+                    Write_NoConflicts(in lr0StateMachine.States.ItemRef(i), reductions);
+                    continue;
+                }
+
+                // Perform two passes over all states. One to record conflicts, and another to see which contributions
+                // belong in the dominant set.
+                {
+                    foreach ((Symbol symbol, int value) in state.Transitions)
+                    {
+                        if (symbol.IsTerminal)
+                        {
+                            AddConflict(symbol, LrConflictContribution.CreateShift(value));
+                        }
+                    }
+                    foreach (ref readonly var reduction in reductions)
+                    {
+                        foreach (var terminal in reduction.Lookahead)
+                        {
+                            AddConflict(terminal, LrConflictContribution.CreateReduce(reduction.Production));
+                        }
+                    }
+                }
+
+                CancellationToken.ThrowIfCancellationRequested();
+
+                {
+                    int j = 0;
+                    foreach ((Symbol symbol, int value) in state.Transitions)
+                    {
+                        if (symbol.IsTerminal)
+                        {
+                            if (ContainsInDominantSet(symbol, LrConflictContribution.CreateShift(value), precedences[j++]))
+                            {
+                                writer.AddShift(TranslateTerminal(symbol), value);
+                            }
+                        }
+                        else
+                        {
+                            writer.AddGoto(TranslateNonterminal(symbol), lr0StateMachine.Gotos[value].ToState);
+                        }
+                    }
+                    foreach (ref readonly var reduction in reductions)
+                    {
+                        foreach (var terminal in reduction.Lookahead)
+                        {
+                            if (ContainsInDominantSet(terminal, LrConflictContribution.CreateReduce(reduction.Production), precedences[j++]))
+                            {
+                                AddReduce(writer, terminal, reduction.Production);
+                            }
+                        }
+                    }
+                    Debug.Assert(j == precedences.Count);
+                    writer.FinishState();
+                }
+
+                conflictResolvers.Clear();
+                precedences.Clear();
+
+                void AddConflict(Symbol symbol, LrConflictContribution contribution)
+                {
+                    ref var resolver = ref CollectionsMarshal.GetValueRefOrAddDefault(conflictResolvers, symbol, out bool exists);
+                    if (!exists)
+                    {
+                        resolver = new LrConflictResolver(infoProvider);
+                    }
+                    _ = resolver.Add(symbol, contribution, out int precedence);
+                    precedences.Add(precedence);
+                }
+
+                bool ContainsInDominantSet(Symbol symbol, LrConflictContribution contribution, int precedence)
+                {
+                    ref var resolver = ref CollectionsMarshal.GetValueRefOrNullRef(conflictResolvers, symbol);
+                    Debug.Assert(!Unsafe.IsNullRef(ref resolver));
+                    return resolver.ContainsInDominantSet(contribution, precedence);
+                }
+            }
+        }
+        return writer;
+
+        void Write_NoConflicts(in Lr0State state, ReadOnlySpan<ReductionLookahead> reductionLookaheads)
+        {
+            foreach ((Symbol symbol, int value) in state.Transitions)
+            {
+                if (symbol.IsTerminal)
+                {
+                    writer.AddShift(TranslateTerminal(symbol), value);
+                }
+                else
+                {
+                    writer.AddGoto(TranslateNonterminal(symbol), lr0StateMachine.Gotos[value].ToState);
+                }
+            }
+            foreach (ref readonly var reductionLookahead in reductionLookaheads)
+            {
+                foreach (var terminal in reductionLookahead.Lookahead)
+                {
+                    AddReduce(writer, terminal, reductionLookahead.Production);
+                }
+            }
+            writer.FinishState();
+        }
+    }
+
+    private static void AddReduce(LrWriter writer, Symbol terminal, Production production)
+    {
+        if (production.Index == StartProductionIndex)
+        {
+            Debug.Assert(terminal.Index == EndSymbolIndex);
+            writer.AddEofAccept();
+            return;
+        }
+        if (terminal.Index == EndSymbolIndex)
+        {
+            writer.AddEofReduce(TranslateProduction(production));
+            return;
+        }
+        writer.AddReduce(TranslateTerminal(terminal), TranslateProduction(production));
     }
 }

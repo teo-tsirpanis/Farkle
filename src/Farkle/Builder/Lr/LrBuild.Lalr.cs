@@ -11,7 +11,6 @@ using BitCollections;
 using Farkle.Collections;
 using Farkle.Diagnostics;
 using Farkle.Diagnostics.Builder;
-using Farkle.Grammars.StateMachines;
 using static Farkle.Builder.Lr.AugmentedSyntaxProvider;
 
 namespace Farkle.Builder.Lr;
@@ -504,57 +503,6 @@ internal readonly partial struct LrBuild
         symbol = productionMembers[item.DotPosition];
         nextItem = new(item.Production, item.DotPosition + 1);
         return true;
-    }
-
-    private sealed class DefaultLrStateMachine(Lr0StateMachine states, GroupedIndexedList<ReductionLookahead> reductionLookaheads) : LrStateMachine
-    {
-        public Lr0StateMachine Lr0StateMachine { get; } = states;
-
-        public GroupedIndexedList<ReductionLookahead> ReductionLookaheads { get; } = reductionLookaheads;
-
-        public override int StateCount => Lr0StateMachine.States.Length;
-
-        public override IEnumerable<LrStateEntry> GetEntriesOfState(int state)
-        {
-            foreach (var transition in Lr0StateMachine.States[state].Transitions)
-            {
-                if (transition.Key.IsTerminal)
-                {
-                    yield return LrStateEntry.Create(TranslateTerminal(transition.Key), LrAction.CreateShift(transition.Value));
-                }
-                else
-                {
-                    yield return LrStateEntry.CreateGoto(TranslateNonterminal(transition.Key), Lr0StateMachine.Gotos[transition.Value].ToState);
-                }
-            }
-
-            foreach (var x in ReductionLookaheads.EnumerateItemsWithKey(state))
-            {
-                if (x.Production.Index == StartProductionIndex)
-                {
-                    foreach (Symbol terminal in x.Lookahead)
-                    {
-                        Debug.Assert(terminal.Index == EndSymbolIndex);
-                        yield return LrStateEntry.CreateEndOfFileAction(LrEndOfFileAction.Accept);
-                    }
-                }
-                else
-                {
-                    var productionHandle = TranslateProduction(x.Production);
-                    foreach (Symbol terminal in x.Lookahead)
-                    {
-                        if (terminal.Index == EndSymbolIndex)
-                        {
-                            yield return LrStateEntry.CreateEndOfFileAction(LrEndOfFileAction.CreateReduce(productionHandle));
-                        }
-                        else
-                        {
-                            yield return LrStateEntry.Create(TranslateTerminal(terminal), LrAction.CreateReduce(productionHandle));
-                        }
-                    }
-                }
-            }
-        }
     }
 
     /// <summary>

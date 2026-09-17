@@ -162,7 +162,7 @@ partial struct LrBuild
 
     private bool IsSplitStableDominantContribution(InadequacyAnnotation annotation, in ConflictDescription conflict)
     {
-        var conflictResolver = new ConflictResolverNeo(OperatorInfoProvider);
+        var conflictResolver = new LrConflictResolver(OperatorInfoProvider);
 
         // An annotation specifies a split-stable dominant contribution if, after removing never contributions,
         // the set of contributions preferred by conflict resolution contains no potential contributions.
@@ -184,19 +184,19 @@ partial struct LrBuild
             hasPotentialContribution |= isPotential;
             switch (conflictResolver.Add(conflict.Symbol, conflict.Contributions[i]))
             {
-                case ConflictResolutionResult.Ignore:
+                case LrConflictResolverDecision.Ignore:
                     break;
-                case ConflictResolutionResult.AddToDominantSet:
+                case LrConflictResolverDecision.AddToDominantSet:
                 // We do the same even if the conflict resolver prefers neither contribution, because per the
                 // IELR paper's definition of split-stable dominant contribution, if one of the contributions
                 // was potential, removing it would have given a different dominant set.
-                case ConflictResolutionResult.ClearDominantSet:
+                case LrConflictResolverDecision.ClearDominantSet:
                     hasPotentialContributionInDominantSet |= isPotential;
                     break;
-                case ConflictResolutionResult.CreateNewDominantSet:
+                case LrConflictResolverDecision.CreateNewDominantSet:
                     hasPotentialContributionInDominantSet = isPotential;
                     break;
-                case ConflictResolutionResult.NoPrecedence:
+                case LrConflictResolverDecision.NoPrecedence:
                     // If a contribution has no precedence info, fallback to the simple split-stable dominance check,
                     // where the matrix contains only always or never contributions.
                     // We already have checked some contributions; check the rest of them.

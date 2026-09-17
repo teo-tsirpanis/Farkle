@@ -300,7 +300,7 @@ internal readonly struct AugmentedSyntaxProvider(IGrammarSyntaxProvider provider
         public int Index { get; }
 
 #if DEBUG
-        private readonly AugmentedSyntaxProvider _debugOnlySyntax;
+        internal readonly AugmentedSyntaxProvider _debugOnlySyntax;
 
         [ExcludeFromCodeCoverage]
         public readonly string GetDebuggerDisplay(int dotPosition = -1)

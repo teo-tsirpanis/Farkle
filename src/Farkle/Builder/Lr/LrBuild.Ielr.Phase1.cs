@@ -152,13 +152,13 @@ partial struct LrBuild
 
                 if (state.Transitions.TryGetValue(t, out int shiftState))
                 {
-                    contributions.Add(LrConflictContribution.CreateShift(shiftState, Syntax));
+                    contributions.Add(LrConflictContribution.CreateShift(shiftState));
                 }
                 foreach (var r in reductions)
                 {
                     if (r.Lookahead[t])
                     {
-                        contributions.Add(LrConflictContribution.CreateReduce(r.Production, Syntax));
+                        contributions.Add(LrConflictContribution.CreateReduce(r.Production));
                     }
                 }
 

@@ -30,6 +30,7 @@ internal sealed class ChainedTokenizer<TChar> : Tokenizer<TChar>
     internal static Tokenizer<TChar> Create(ImmutableArray<Tokenizer<TChar>> components)
     {
         Debug.Assert(!components.IsDefaultOrEmpty);
+        Debug.Assert(components.All(x => x is not ChainedTokenizer<TChar>));
         if (components is [{ CanSkipChainedTokenizerWrapping: true } tokenizer])
         {
             return tokenizer;

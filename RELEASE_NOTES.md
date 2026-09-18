@@ -3,6 +3,7 @@
 * Added [enhanced syntax](./docs/docs/enhanced-syntax.md), which is a set of convenience APIs powered by source generators. At this moment, they provide a simpler way to create production builders.
 * Added support for typed virtual terminals in the builder, allowing them to participate in semantic analysis. This is exposed through the generic overload of the `Terminal.Virtual` method and the `virtualTerminalT` function in the F# API.
 * The `--no-lalr` option in the `farkle render` CLI tool subcommand has been replaced with the `--no-lr` option. The previous option is kept for compatibility.
+* Fixed a bug when using custom tokenizer chains.
 
 #### 7.0.1 - 09-07-2026
 * Fixed a bug where installing the `Farkle` NuGet package on unsupported frameworks did not fail.

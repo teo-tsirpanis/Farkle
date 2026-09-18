@@ -132,21 +132,21 @@ public static class Tokenizer
             switch (components[i].Value)
             {
                 case Tokenizer<TChar> tokenizer:
-                    builder.Add(tokenizer);
+                    AddTokenizer(tokenizer);
                     break;
                 case Func<IGrammarProvider, Tokenizer<TChar>> tokenizerFactory:
                     if (grammar is null)
                     {
                         ThrowHelpers.ThrowInvalidOperationException(Resources.ChainedTokenizerBuilder_NoGrammar);
                     }
-                    builder.Add(tokenizerFactory(grammar));
+                    AddTokenizer(tokenizerFactory(grammar));
                     break;
                 case null:
                     if (defaultTokenizer is null)
                     {
                         ThrowHelpers.ThrowInvalidOperationException(Resources.ChainedTokenizerBuilder_NoDefaultTokenizer);
                     }
-                    builder.Add(defaultTokenizer);
+                    AddTokenizer(defaultTokenizer);
                     break;
                 default:
                     ThrowHelpers.ThrowArgumentException($"{nameof(components)}[{i}]");
@@ -154,6 +154,18 @@ public static class Tokenizer
             }
         }
         return ChainedTokenizer<TChar>.Create(builder.DrainToImmutable());
+
+        void AddTokenizer(Tokenizer<TChar> tokenizer)
+        {
+            if (tokenizer is ChainedTokenizer<TChar> chained)
+            {
+                builder.AddRange(chained.Components);
+            }
+            else
+            {
+                builder.Add(tokenizer);
+            }
+        }
     }
 
     internal static Tokenizer<char> Create(Grammar grammar, bool throwIfError, object? customError = null)

@@ -652,7 +652,6 @@ internal readonly partial struct LrBuild
 
         public GotoFollowDependency(int fromGoto, int toGoto, GotoFollowDependencyKinds kind)
         {
-            Debug.Assert(fromGoto != toGoto);
             Debug.Assert(BitOperations.PopCount((uint)kind) == 1);
             // Only one of the flags is set, so we can compress it to two bytes by taking its log2.
             var flags = (uint)BitOperations.TrailingZeroCount((uint)kind);

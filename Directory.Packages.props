@@ -22,8 +22,8 @@
     <PackageVersion Include="FParsec" Version="1.1.1" />
     <PackageVersion Include="FsCheck" Version="3.4.0" />
     <PackageVersion Include="FSharp.Core" Version="10.1.401" />
-    <PackageVersion Include="FsLexYacc.Runtime" Version="12.0.0" />
-    <PackageVersion Include="FsLexYacc" Version="12.0.0" />
+    <PackageVersion Include="FsLexYacc.Runtime" Version="12.1.2" />
+    <PackageVersion Include="FsLexYacc" Version="12.1.2" />
     <PackageVersion Include="HtmlAgilityPack" Version="1.13.0" />
     <PackageVersion Include="Irony" Version="1.5.3" />
     <PackageVersion Include="Microsoft.Bcl.HashCode" Version="6.0.0" />

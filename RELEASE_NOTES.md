@@ -2,6 +2,7 @@
 * Added support for the IELR(1) algorithm in the builder, which provides the full expressive power of LR(1) grammars without being susceptible to mysterious conflicts that can occur with LALR(1), while generating only slightly larger tables. IELR(1) is used by default.
 * Added [enhanced syntax](./docs/docs/enhanced-syntax.md), which is a set of convenience APIs powered by source generators. At this moment, they provide a simpler way to create production builders.
 * Added support for typed virtual terminals in the builder, allowing them to participate in semantic analysis. This is exposed through the generic overload of the `Terminal.Virtual` method and the `virtualTerminalT` function in the F# API.
+* Refactored LR conflict resolution to improve performance and predictably handle conflicts with more than two contributions, and conflicts where some of the contributions do not have precedence information.
 * The `--no-lalr` option in the `farkle render` CLI tool subcommand has been replaced with the `--no-lr` option. The previous option is kept for compatibility.
 
 #### 7.0.1 - 09-07-2026

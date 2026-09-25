@@ -69,7 +69,7 @@ internal class LrConflictResolverTests
             MakeSamePrecedenceMulti(AssociativityType.PrecedenceOnly, [_shiftContribution, _reduceContribution1, _reduceContribution2]),
             MakeReduceReduceDifferentPrecedence(1, [new(_production1Token), new(_production2Token)], [_reduceContribution2]),
             MakeReduceReduceDifferentPrecedence(2, [new(_production1Token, _production2Token)], [_reduceContribution1, _reduceContribution2]),
-            MakeReduceReduceDifferentPrecedence(1, [new(_production1Token), new(_production2Token)], [_reduceContribution2]),
+            MakeReduceReduceDifferentPrecedence(3, [new(_production2Token), new(_production1Token)], [_reduceContribution1]),
             new([new PrecedenceOnly(_production1Token), new PrecedenceOnly(_production2Token)], [_reduceContribution1, _reduceContribution2], null) { TestName = "ReduceReduceUnsupported" },
         ];
 

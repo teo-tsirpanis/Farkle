@@ -316,6 +316,7 @@ partial struct LrBuild
     {
         Debug.Assert(result.Count == 0);
         bool hasEligibleContribution = false;
+        bool hasShift = false;
         bool isFullyResolvable = true;
         for (int i = 0; i < conflict.Contributions.Length; i++)
         {
@@ -326,6 +327,7 @@ partial struct LrBuild
                 continue;
             }
             hasEligibleContribution = true;
+            hasShift |= candidateContribution.IsShift(out _);
             if (!HasPrecedenceInfo(conflict.Symbol, candidateContribution))
             {
                 isFullyResolvable = false;
@@ -336,6 +338,11 @@ partial struct LrBuild
         if (!hasEligibleContribution)
         {
             return false;
+        }
+        // If we have a Reduce-Reduce conflict, take the operator scope's ability to resolve it into account.
+        if (isFullyResolvable && !hasShift && !(OperatorInfoProvider?.OperatorScope.CanResolveReduceReduceConflicts ?? false))
+        {
+            isFullyResolvable = false;
         }
 
         var conflictResolver = new LrConflictResolver(OperatorInfoProvider);

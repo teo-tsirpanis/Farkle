@@ -317,12 +317,12 @@ partial struct LrBuild
         Debug.Assert(result.Count == 0);
         bool hasEligibleContribution = false;
         bool hasShift = false;
-        bool isFullyResolvable = true;
-        for (int i = 0; i < conflict.Contributions.Length; i++)
+        bool isFullyResolvable = OperatorInfoProvider is not null;
+        for (int i = 0; (!hasEligibleContribution || isFullyResolvable) && i < conflict.Contributions.Length; i++)
         {
             var candidateContribution = conflict.Contributions[i];
             var matrixRow = matrix[i];
-            if (!FilterContribution(matrixRow, conflict.Symbol, lookaheads))
+            if (!IsContributionEnabledByAnnotation(matrixRow, conflict.Symbol, lookaheads))
             {
                 continue;
             }
@@ -331,7 +331,6 @@ partial struct LrBuild
             if (!HasPrecedenceInfo(conflict.Symbol, candidateContribution))
             {
                 isFullyResolvable = false;
-                break;
             }
         }
 
@@ -350,7 +349,7 @@ partial struct LrBuild
         {
             var candidateContribution = conflict.Contributions[i];
             var matrixRow = matrix[i];
-            if (!FilterContribution(matrixRow, conflict.Symbol, lookaheads))
+            if (!IsContributionEnabledByAnnotation(matrixRow, conflict.Symbol, lookaheads))
             {
                 continue;
             }
@@ -383,7 +382,7 @@ partial struct LrBuild
         }
         return true;
 
-        static bool FilterContribution(BitSet? row, Symbol conflictSymbol, TerminalSet[]? lookaheads)
+        static bool IsContributionEnabledByAnnotation(BitSet? row, Symbol conflictSymbol, TerminalSet[]? lookaheads)
         {
             if (row is null)
             {

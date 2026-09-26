@@ -448,7 +448,7 @@ internal readonly partial struct LrBuild
                 else
                 {
                     transitions.Add(x.Key, gotos.Count);
-                    gotos.Add(new(states.Count, destinationState, x.Key.Index, Syntax));
+                    gotos.Add(new(states.Count, destinationState, x.Key));
                 }
             }
             states.Add(new Lr0State(kernelItems, transitions));
@@ -660,16 +660,11 @@ internal readonly partial struct LrBuild
         // advantage of better debugger display.
         private readonly Symbol _symbol;
 
-        private GotoInfo(int fromState, int toState, Symbol symbol)
+        public GotoInfo(int fromState, int toState, Symbol symbol)
         {
             _symbol = symbol;
             FromState = fromState;
             ToState = toState;
-        }
-
-        public GotoInfo(int fromState, int toState, int nonterminal, AugmentedSyntaxProvider syntax)
-            : this(fromState, toState, Symbol.CreateNonterminal(nonterminal, syntax))
-        {
         }
 
         /// <summary>

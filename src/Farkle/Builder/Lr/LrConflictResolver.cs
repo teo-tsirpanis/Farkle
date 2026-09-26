@@ -114,6 +114,8 @@ internal struct LrConflictResolver(OperatorInfoProvider? infoProvider)
                         return LrConflictResolverDecision.Ignore;
                     case AssociativityType.LeftAssociative when !_hasRemovedShiftFromDominantSet:
                         // If we have a shift-reduce conflict with same precedence and left associativity, we
+                        // first create a new dominant set for the reduce action (the shift had been added before)
+                        // and add any subsequent reduces to it.
                         _hasRemovedShiftFromDominantSet = true;
                         return LrConflictResolverDecision.CreateNewDominantSet;
                     case AssociativityType.NonAssociative:
@@ -123,7 +125,7 @@ internal struct LrConflictResolver(OperatorInfoProvider? infoProvider)
             return LrConflictResolverDecision.AddToDominantSet;
         }
         _dominantPrecedence = precedence;
-        if (!_hasShift)
+        if (_hasShift)
         {
             // We don't care about associativity in Reduce/Reduce conflicts.
             _dominantAssociativity = _infoProvider.OperatorScope.AssociativityGroups[precedence].AssociativityType;

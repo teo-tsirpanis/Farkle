@@ -4,31 +4,29 @@
 namespace Farkle.Builder.Lr;
 
 /// <summary>
-/// Represents the result of resolving an LR conflict.
+/// Represents how a conflict contribution affects the formation of the dominant set.
 /// </summary>
 internal enum LrConflictResolverDecision
 {
     /// <summary>
-    /// The conflict cannot be resolved; include both actions in the state machine.
+    /// The contribution should be ignored.
     /// </summary>
-    CannotChoose,
+    Ignore,
     /// <summary>
-    /// Choose the first option. This is Shift on Shift-Reduce conflicts and
-    /// Reduce the first production on Reduce-Reduce conflicts.
+    /// The contribution should be added to the dominant set.
     /// </summary>
-    ChooseOption1,
+    AddToDominantSet,
     /// <summary>
-    /// Choose the second option. This is Reduce on Shift-Reduce conflicts and
-    /// Reduce the second production on Reduce-Reduce conflicts.
+    /// The contribution should create a new dominant set.
     /// </summary>
-    ChooseOption2,
+    CreateNewDominantSet,
     /// <summary>
-    /// Choose neither option.
+    /// The contribution should clear the dominant set.
     /// </summary>
-    /// <remarks>
-    /// This can be returned in Shift-Reduce conflicts if the terminal and the production
-    /// have the same precedence and <see cref="OperatorPrecedence.AssociativityType.NonAssociative"/>
-    /// associativity.
-    /// </remarks>
-    ChooseNeither
+    ClearDominantSet,
+    /// <summary>
+    /// The contribution has no precedence. All contributions, including those previously
+    /// discarded, are included in the dominant set.
+    /// </summary>
+    NoPrecedence,
 }

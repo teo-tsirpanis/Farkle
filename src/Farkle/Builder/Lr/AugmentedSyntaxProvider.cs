@@ -190,7 +190,7 @@ internal readonly struct AugmentedSyntaxProvider(IGrammarSyntaxProvider provider
                 return Symbol.CreateNonterminal(_provider.StartSymbol + 1, this);
             default:
                 var (symbolIndex, isTerminal) = _provider.GetProductionMember(memberIndex - 1);
-                return Symbol.Create((symbolIndex + 1, isTerminal), this);
+                return Symbol.Create(symbolIndex + 1, isTerminal, this);
         }
     }
 
@@ -212,8 +212,8 @@ internal readonly struct AugmentedSyntaxProvider(IGrammarSyntaxProvider provider
             $"<{_debugOnlySyntax.GetNonterminalName(Index)}>";
 #else
         public string GetDebuggerDisplay() => IsTerminal ?
-            $"Terminal {Index}" :
-            $"Nonterminal {Index}";
+            $"T{Index}" :
+            $"N{Index}";
 #endif
 
         public Symbol(uint value, AugmentedSyntaxProvider syntax)
@@ -228,12 +228,12 @@ internal readonly struct AugmentedSyntaxProvider(IGrammarSyntaxProvider provider
 
         public int Index => (int)(_value & ~ValueMask);
 
-        public static Symbol Create((int Index, bool IsTerminal) symbol, AugmentedSyntaxProvider syntax) =>
-            new((uint)symbol.Index | (symbol.IsTerminal ? 0 : ValueMask), syntax);
+        public static Symbol Create(int index, bool isTerminal, AugmentedSyntaxProvider syntax) =>
+            new((uint)index | (isTerminal ? 0 : ValueMask), syntax);
 
-        public static Symbol CreateTerminal(int index, AugmentedSyntaxProvider syntax) => Create((index, true), syntax);
+        public static Symbol CreateTerminal(int index, AugmentedSyntaxProvider syntax) => Create(index, true, syntax);
 
-        public static Symbol CreateNonterminal(int index, AugmentedSyntaxProvider syntax) => Create((index, false), syntax);
+        public static Symbol CreateNonterminal(int index, AugmentedSyntaxProvider syntax) => Create(index, false, syntax);
 
         public bool Equals(Symbol other) => _value == other._value;
 
@@ -300,7 +300,7 @@ internal readonly struct AugmentedSyntaxProvider(IGrammarSyntaxProvider provider
         public int Index { get; }
 
 #if DEBUG
-        private readonly AugmentedSyntaxProvider _debugOnlySyntax;
+        internal readonly AugmentedSyntaxProvider _debugOnlySyntax;
 
         [ExcludeFromCodeCoverage]
         public readonly string GetDebuggerDisplay(int dotPosition = -1)
@@ -337,7 +337,7 @@ internal readonly struct AugmentedSyntaxProvider(IGrammarSyntaxProvider provider
             return sb.ToString();
         }
 #else
-        public readonly string GetDebuggerDisplay() => "Production " + Index;
+        public readonly string GetDebuggerDisplay() => $"P{Index}";
 #endif
 
         public Production(int index, AugmentedSyntaxProvider syntax)

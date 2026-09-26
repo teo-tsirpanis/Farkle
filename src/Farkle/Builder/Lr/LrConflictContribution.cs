@@ -44,11 +44,16 @@ internal readonly struct LrConflictContribution : IComparable<LrConflictContribu
         return $"Reduce {production.GetDebuggerDisplay()}";
     }
 
-    public static LrConflictContribution CreateShift(int state, AugmentedSyntaxProvider syntax) =>
-        new(state + 1, syntax);
+    public static LrConflictContribution CreateShift(int state) =>
+        // We don't need the AugmentedSyntaxProvider to format a shift action.
+        new(state + 1, default);
 
-    public static LrConflictContribution CreateReduce(Production production, AugmentedSyntaxProvider syntax) =>
-        new(-production.Index, syntax);
+    public static LrConflictContribution CreateReduce(Production production) =>
+#if DEBUG
+        new(-production.Index, production._debugOnlySyntax);
+#else
+        new(-production.Index, default);
+#endif
 
     public bool IsAccept => Value == 0;
 

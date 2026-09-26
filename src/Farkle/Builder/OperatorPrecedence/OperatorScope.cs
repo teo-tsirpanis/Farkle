@@ -21,7 +21,8 @@ namespace Farkle.Builder.OperatorPrecedence;
 public sealed class OperatorScope : IEnumerable<AssociativityGroup>
 {
     /// <summary>
-    /// Whether the operator scope can be used to resolve reduce-reduce conflicts.
+    /// Whether the operator scope can be used to resolve reduce-reduce conflicts, or multi-way conflicts
+    /// without a Shift action.
     /// </summary>
     /// <remarks>
     /// This capability is not enabled by default.

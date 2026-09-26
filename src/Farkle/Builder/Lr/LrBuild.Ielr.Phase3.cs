@@ -315,67 +315,74 @@ partial struct LrBuild
     private bool TryFillDominantContributions(ConflictDescription conflict, InadequacyContributionMatrix matrix, TerminalSet[]? lookaheads, List<LrConflictContribution> result)
     {
         Debug.Assert(result.Count == 0);
-        bool isFullyResolvable = true;
-        for (int i = 0; i < conflict.Contributions.Length; i++)
+        bool hasEligibleContribution = false;
+        bool hasShift = false;
+        bool isFullyResolvable = OperatorInfoProvider is not null;
+        for (int i = 0; (!hasEligibleContribution || isFullyResolvable) && i < conflict.Contributions.Length; i++)
         {
             var candidateContribution = conflict.Contributions[i];
             var matrixRow = matrix[i];
-            if (!FilterContribution(matrixRow, conflict.Symbol, lookaheads))
+            if (!IsContributionEnabledByAnnotation(matrixRow, conflict.Symbol, lookaheads))
             {
                 continue;
             }
+            hasEligibleContribution = true;
+            hasShift |= candidateContribution.IsShift(out _);
             if (!HasPrecedenceInfo(conflict.Symbol, candidateContribution))
             {
                 isFullyResolvable = false;
-                break;
             }
         }
-        bool isChooseNeitherDominating = false;
+
+        if (!hasEligibleContribution)
+        {
+            return false;
+        }
+        // If we have a Reduce-Reduce conflict, take the operator scope's ability to resolve it into account.
+        if (isFullyResolvable && !hasShift && !(OperatorInfoProvider?.OperatorScope.CanResolveReduceReduceConflicts ?? false))
+        {
+            isFullyResolvable = false;
+        }
+
+        var conflictResolver = new LrConflictResolver(OperatorInfoProvider);
         for (int i = 0; i < conflict.Contributions.Length; i++)
         {
             var candidateContribution = conflict.Contributions[i];
             var matrixRow = matrix[i];
-            if (!FilterContribution(matrixRow, conflict.Symbol, lookaheads))
+            if (!IsContributionEnabledByAnnotation(matrixRow, conflict.Symbol, lookaheads))
             {
                 continue;
             }
             // If some contributions do not have precedence info, include all eligible contributions in the result.
-            if (!isFullyResolvable || result.Count == 0)
+            if (!isFullyResolvable)
             {
                 result.Add(candidateContribution);
                 continue;
             }
             // This works similarly to IsSplitStableDominantContribution from Phase 2, but we need to keep
             // track of which contributions are dominant.
-            var decision = ResolveConflict(conflict.Symbol, result[0], candidateContribution);
-            switch (decision)
+            switch (conflictResolver.Add(conflict.Symbol, candidateContribution))
             {
-                case LrConflictResolverDecision.ChooseOption1:
+                case LrConflictResolverDecision.Ignore:
                     break;
-                case LrConflictResolverDecision.ChooseOption2:
+                case LrConflictResolverDecision.AddToDominantSet:
+                    result.Add(candidateContribution);
+                    break;
+                case LrConflictResolverDecision.CreateNewDominantSet:
                     result.Clear();
                     result.Add(candidateContribution);
-                    isChooseNeitherDominating = false;
                     break;
-                case LrConflictResolverDecision.CannotChoose:
-                case LrConflictResolverDecision.ChooseNeither:
-                    isChooseNeitherDominating |= decision == LrConflictResolverDecision.ChooseNeither;
-                    result.Add(candidateContribution);
+                case LrConflictResolverDecision.ClearDominantSet:
+                    result.Clear();
+                    break;
+                case LrConflictResolverDecision.NoPrecedence:
+                    Debug.Fail("This should not happen, because we already checked that all contributions have precedence info");
                     break;
             }
         }
+        return true;
 
-        // We need to distinguish between "no contributions passed the filter", and
-        // "some contributions passed the filter", but we return none of them, because
-        // the conflict resolver decided that none of them should be chosen.
-        bool hasResult = result.Count != 0;
-        if (isChooseNeitherDominating)
-        {
-            result.Clear();
-        }
-        return hasResult;
-
-        static bool FilterContribution(BitSet? row, Symbol conflictSymbol, TerminalSet[]? lookaheads)
+        static bool IsContributionEnabledByAnnotation(BitSet? row, Symbol conflictSymbol, TerminalSet[]? lookaheads)
         {
             if (row is null)
             {

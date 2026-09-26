@@ -160,24 +160,9 @@ partial struct LrBuild
         }
     }
 
-    private bool IsSplitStableDominantContribution(InadequacyAnnotation annotation, ConflictDescription conflict)
+    private bool IsSplitStableDominantContribution(InadequacyAnnotation annotation, in ConflictDescription conflict)
     {
-        bool hasPotential = false;
-        // Employ simple split-stable dominance check, where the matrix contains only always or never contributions.
-        // We do it first to avoid conflict resolution if we can, which shows up in profiling.
-        foreach (var contribution in annotation.ContributionMatrix)
-        {
-            if (ClassifyContribution(contribution) == InadequacyContributionClassification.Potential)
-            {
-                hasPotential = true;
-                break;
-            }
-        }
-
-        if (!hasPotential)
-        {
-            return true;
-        }
+        var conflictResolver = new LrConflictResolver(OperatorInfoProvider);
 
         // An annotation specifies a split-stable dominant contribution if, after removing never contributions,
         // the set of contributions preferred by conflict resolution contains no potential contributions.
@@ -185,9 +170,8 @@ partial struct LrBuild
         // this algorithm to the IELR paper's trivial definition of "the matrix contains only always or never
         // contributions".
 
-        // We keep one contribution from the dominant set, and whether the dominant set contains a potential contribution.
-        LrConflictContribution? dominantContribution = null;
-        bool isPotentialContributionInDominantSet = false;
+        bool hasPotentialContribution = false;
+        bool hasPotentialContributionInDominantSet = false;
         var matrix = annotation.ContributionMatrix;
         for (int i = 0; i < matrix.Count; i++)
         {
@@ -197,38 +181,33 @@ partial struct LrBuild
                 continue;
             }
             bool isPotential = classification == InadequacyContributionClassification.Potential;
-            var candidateContribution = conflict.Contributions[i];
-            // This is the first non-never contribution we have seen; we include it in the dominant set.
-            if (dominantContribution is null)
+            hasPotentialContribution |= isPotential;
+            switch (conflictResolver.Add(conflict.Symbol, conflict.Contributions[i]))
             {
-                dominantContribution = candidateContribution;
-                isPotentialContributionInDominantSet = isPotential;
-                continue;
-            }
-            switch (ResolveConflict(conflict.Symbol, dominantContribution.Value, candidateContribution))
-            {
-                // The dominant contribution is preferred over the candidate contribution; we do nothing.
-                case LrConflictResolverDecision.ChooseOption1:
+                case LrConflictResolverDecision.Ignore:
                     break;
-                // The candidate contribution is preferred over the dominant contribution; this becomes
-                // the new dominant contribution.
-                case LrConflictResolverDecision.ChooseOption2:
-                    dominantContribution = candidateContribution;
-                    isPotentialContributionInDominantSet = isPotential;
-                    break;
-                // The dominant contribution and the candidate contribution are equally preferred; we keep
-                // the same dominant contribution, and update whether the dominant set contains a potential
-                // contribution.
-                case LrConflictResolverDecision.CannotChoose:
+                case LrConflictResolverDecision.AddToDominantSet:
                 // We do the same even if the conflict resolver prefers neither contribution, because per the
                 // IELR paper's definition of split-stable dominant contribution, if one of the contributions
                 // was potential, removing it would have given a different dominant set.
-                case LrConflictResolverDecision.ChooseNeither:
-                    isPotentialContributionInDominantSet |= isPotential;
+                case LrConflictResolverDecision.ClearDominantSet:
+                    hasPotentialContributionInDominantSet |= isPotential;
                     break;
+                case LrConflictResolverDecision.CreateNewDominantSet:
+                    hasPotentialContributionInDominantSet = isPotential;
+                    break;
+                case LrConflictResolverDecision.NoPrecedence:
+                    // If a contribution has no precedence info, fallback to the simple split-stable dominance check,
+                    // where the matrix contains only always or never contributions.
+                    // We already have checked some contributions; check the rest of them.
+                    for (int j = i + 1; !hasPotentialContribution && j < matrix.Count; j++)
+                    {
+                        hasPotentialContribution |= ClassifyContribution(matrix[j]) == InadequacyContributionClassification.Potential;
+                    }
+                    return !hasPotentialContribution;
             }
         }
-        return !isPotentialContributionInDominantSet;
+        return !hasPotentialContributionInDominantSet;
     }
 
     private static InadequacyContributionClassification ClassifyContribution(BitSet? contribution) => contribution switch

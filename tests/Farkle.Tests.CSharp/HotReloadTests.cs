@@ -19,7 +19,7 @@ internal class HotReloadTests
     {
         var farkleAssembly = typeof(CharParser).Assembly;
         Assert.That(farkleAssembly.GetCustomAttributes<MetadataUpdateHandlerAttribute>(),
-            Has.One.Matches((MetadataUpdateHandlerAttribute attr) => attr.HandlerType == typeof(MetadataUpdatableManager)));
+            Has.One.Matches((MetadataUpdateHandlerAttribute? attr) => attr?.HandlerType == typeof(MetadataUpdatableManager)));
     }
 
     [Test]

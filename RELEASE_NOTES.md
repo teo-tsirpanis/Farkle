@@ -1,4 +1,5 @@
 #### 7.1.1
+* Fixed a bug where suppressing the [IDE0051 warning](https://learn.microsoft.com/en-us/dotnet/fundamentals/code-analysis/style-rules/ide0051) for precompiler input methods does not happen on Visual Basic projects.
 
 #### 7.1.0 - 27-09-2026
 * Added support for the IELR(1) algorithm in the builder, which provides the full expressive power of LR(1) grammars without being susceptible to mysterious conflicts that can occur with LALR(1), while generating only slightly larger tables. IELR(1) is used by default.

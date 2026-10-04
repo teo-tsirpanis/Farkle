@@ -4,7 +4,7 @@
 using System.Collections;
 using System.Collections.Immutable;
 
-namespace Farkle.Analyzers.Models;
+namespace Common;
 
 public readonly struct EquatableArray<T>(ImmutableArray<T> array) : IEquatable<EquatableArray<T>>, IReadOnlyList<T>
 {

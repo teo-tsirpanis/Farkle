@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
     <LangVersion>14</LangVersion>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
@@ -15,18 +15,11 @@
     <Compile Include="../Common/Roslyn/IncrementalGeneratorContextExtensions.cs" Link="Common\Roslyn\IncrementalGeneratorContextExtensions.cs" />
     <Using Include="Common" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" />
     <PackageReference Include="PolySharp" PrivateAssets="all" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Update="Properties/*.resx" ManifestResourceName="Farkle.Analyzers.%(Filename)" />
-    <EmbeddedResource Update="Properties/Resources.resx">
-      <Generator>MSBuild:Compile</Generator>
-      <StronglyTypedFileName>$(IntermediateOutputPath)/Resources.Designer.cs</StronglyTypedFileName>
-      <StronglyTypedLanguage>CSharp</StronglyTypedLanguage>
-      <StronglyTypedNamespace>Farkle.Analyzers</StronglyTypedNamespace>
-      <StronglyTypedClassName>Resources</StronglyTypedClassName>
-    </EmbeddedResource>
-    <Compile Condition="$(DesignTimeBuild) == true" Include="$(IntermediateOutputPath)/Resources.Designer.cs" />
+    <!-- Include embedded sources in design-time builds to get IntelliSense. They use some features not available in .NET Standard 2.0. -->
+    <Compile Condition="$(DesigntimeBuild) == false OR '$(TargetFramework)' == 'netstandard2.0'" Remove="EmbeddedSources/**" />
+    <EmbeddedResource Include="EmbeddedSources/**.cs" LogicalName="EmbeddedSources.%(Filename)" />
   </ItemGroup>
 </Project>

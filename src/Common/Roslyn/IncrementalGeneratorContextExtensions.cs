@@ -3,7 +3,7 @@
 
 using Microsoft.CodeAnalysis;
 
-namespace Farkle.Analyzers;
+namespace Common;
 
 internal static partial class Compatibility
 {

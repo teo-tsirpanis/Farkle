@@ -18,24 +18,24 @@ let toolsVersion =
     let asm = Assembly.GetExecutingAssembly()
     asm.GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion
 
-let private equalsCI (x1: ReadOnlySpan<_>) (x2: string) =
-    x1.Equals(x2.AsSpan(), StringComparison.OrdinalIgnoreCase)
+let private endsWithCI (x1: string) x2 =
+    x1.EndsWith(x2, StringComparison.OrdinalIgnoreCase)
 
-let isProjectExtension x =
-    equalsCI x ".csproj"
-    || equalsCI x ".fsproj"
-    || equalsCI x ".vbproj"
-    || equalsCI x ".proj"
+let isProjectPath x =
+    endsWithCI x ".csproj"
+    || endsWithCI x ".fsproj"
+    || endsWithCI x ".vbproj"
+    || endsWithCI x ".proj"
 
-let isAssemblyExtension x =
-    equalsCI x ".dll"
-    || equalsCI x ".exe"
+let isAssemblyPath x =
+    endsWithCI x ".dll"
+    || endsWithCI x ".exe"
 
-let isGrammarExtension x =
-    equalsCI x ".cgt"
-    || equalsCI x ".egt"
-    || equalsCI x ".egtn"
-    || equalsCI x ".grammar.dat"
+let isGrammarPath x =
+    endsWithCI x ".cgt"
+    || endsWithCI x ".egt"
+    || endsWithCI x ".egtn"
+    || endsWithCI x ".grammar.dat"
 
 let private invalidFileNameChars = SearchValues.Create(Path.GetInvalidFileNameChars())
 

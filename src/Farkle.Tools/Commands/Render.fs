@@ -94,9 +94,7 @@ let warnOnUnusedArguments (grammarPath: string) (args: ParseResults<_>) =
             Log.Warning("Argument {IgnoredArgument} is no longer supported and ignored.", argName)
     let isCustomTemplate = args.Contains TemplateFile
     let isHtml = args.Contains Html || not isCustomTemplate
-    let isProjectFile =
-        let extension = Path.GetExtension(grammarPath.AsSpan())
-        isProjectExtension extension
+    let isProjectFile = isProjectPath grammarPath
     doWarnIfNot isHtml <@ ``Custom-head`` @> "--custom-head"
     doWarnIfNotOpt isHtml <@ ``No-css`` @> "--no-css"
     doWarnIfNotOpt isHtml <@ ``No-lr`` @> "--no-lr"
@@ -124,17 +122,14 @@ let run json (args: ParseResults<_>) = either {
         match args.TryGetResult OutputFile with
         | Some x -> Path.GetFullPath x
         | None ->
-            let directory = Environment.CurrentDirectory.AsSpan()
-            let mutable separatorChar = Path.DirectorySeparatorChar
-            let separator = ReadOnlySpan(&separatorChar)
             let fileName =
-                let grammarPath = grammarInput.GrammarPath.AsSpan()
-                if isGrammarExtension (Path.GetExtension grammarPath) then
-                    Path.GetFileNameWithoutExtension grammarPath
+                if isProjectPath grammarInput.GrammarPath then
+                    Path.GetFileNameWithoutExtension grammarInput.GrammarPath
                 else
-                    (sanitizeUnsafeFileName Log.Logger grammarInput.Grammar.GrammarInfo.Name).AsSpan()
-            let extension = generatedTemplate.FileExtension.AsSpan()
-            String.Concat(directory, separator, fileName, extension)
+                    sanitizeUnsafeFileName Log.Logger grammarInput.Grammar.GrammarInfo.Name
+            let extension = generatedTemplate.FileExtension
+            $"{fileName}{extension}"
+            |> Path.GetFullPath
 
     if json then
         {|outputFile = outputFile; content = generatedTemplate.Content|}

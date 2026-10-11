@@ -26,18 +26,14 @@ with
             | Configuration _ -> "The configuration the project will be evaluated with. The default for most projects is Debug."
             | Framework _ -> "The target framework of the project."
 
-let private getAssemblyFile projectOptions (file: string) = either {
-    let ext = Path.GetExtension(file.AsSpan())
-    if isAssemblyExtension ext then
+let private getAssemblyFile projectOptions file = either {
+    if isAssemblyPath file then
         return file
-    elif isProjectExtension ext then
+    elif isProjectPath file then
         do! ProjectResolver.registerMSBuild()
         return! ProjectResolver.resolveProjectAssembly projectOptions file
-    elif isGrammarExtension ext then
-        Log.Error("There is no point in listing the precompiled grammars of a grammar file.")
-        return! Error()
     else
-        Log.Error("Unsupported file extension {FileExtension:l}.", ext.ToString())
+        Log.Error("Unsupported file extension {FileExtension:l}.", Path.GetExtension(file))
         return! Error()
 }
 

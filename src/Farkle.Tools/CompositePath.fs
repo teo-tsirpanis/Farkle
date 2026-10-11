@@ -78,9 +78,8 @@ module CompositePath =
                         path.AsSpan(ranges[2].Start).ToString()
                 CompositePath(filePath, Some <| GrammarSelector(grammarType, key))
 
-    let rec private resolveGrammar projectOptions grammarSelector originalPath (filePath: string) = either {
-        let ext = Path.GetExtension(filePath.AsSpan())
-        if isProjectExtension ext then
+    let rec private resolveGrammar projectOptions grammarSelector originalPath filePath = either {
+        if isProjectPath filePath then
             do! ProjectResolver.registerMSBuild()
             let! assemblyPath = ProjectResolver.resolveProjectAssembly projectOptions filePath
             if originalPath = filePath then
@@ -92,7 +91,7 @@ module CompositePath =
                 // But for the very unlikely case that the project loops again, we should fail.
                 Log.Fatal("An infinite loop was detected in the composite path resolver. Please report a bug on GitHub.")
                 return! Error()
-        elif isAssemblyExtension ext then
+        elif isAssemblyPath filePath then
             use f = File.OpenRead filePath
             use pe = new PEReader(f)
             let grammars = PrecompiledAssemblyFileLoader.loadAll pe
@@ -120,16 +119,16 @@ want by appending {CompositePathSuffixHint} to the input file.", "::<type-name>[
 
                     Log.Information("Hint: Run {CommandHint} to list all precompiled grammars of a project's assembly.", "farkle list")
                     return! Error()
-        elif isGrammarExtension ext then
+        elif isGrammarPath filePath then
             return GrammarTemplateInput.Create (loadGrammar filePath) filePath
         else
-            Log.Error("Unsupported file extension: {FileExtension}", ext.ToString())
+            Log.Error("Unsupported file extension: {FileExtension}", Path.GetExtension(filePath))
             return! Error()
     }
 
     let findDefaultProject currentDir =
         Directory.EnumerateFiles(currentDir, "*.??proj", SearchOption.TopDirectoryOnly)
-        |> Seq.filter(fun path -> isProjectExtension(Path.GetExtension(path.AsSpan())))
+        |> Seq.filter isProjectPath
         |> List.ofSeq
         |> function
         | [] ->

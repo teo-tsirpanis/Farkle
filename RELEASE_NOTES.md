@@ -1,4 +1,4 @@
-#### 7.1.1
+#### 7.1.1 - 12-10-2026
 * Fixed a bug where suppressing the [IDE0051 warning](https://learn.microsoft.com/en-us/dotnet/fundamentals/code-analysis/style-rules/ide0051) for precompiler input methods does not happen on Visual Basic projects.
 * Fixed an error when reading certain large grammars.
 * Fixed bugs in the CLI tool.

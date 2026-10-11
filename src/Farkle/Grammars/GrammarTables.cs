@@ -468,10 +468,14 @@ internal readonly struct GrammarTables
             if (isTerminal)
             {
                 Assert(!rejectTerminals, "Terminals must come before other token symbols.");
-                rejectTerminals = false;
+            }
+            else
+            {
+                rejectTerminals = true;
             }
             if (isGroupStart)
             {
+                Assert(GroupRowCount != 0, "Grammar has group start token symbol but no groups.");
                 Assert(!isTerminal, "Terminals must not have the GroupStart flag set.");
                 bool added = (groupStarts ??= new()).Add(i);
                 Debug.Assert(added);
@@ -607,7 +611,7 @@ internal readonly struct GrammarTables
 
     private static void ValidateHandle(uint tableIndex, int rowCount)
     {
-        if (tableIndex > (uint)rowCount)
+        if (tableIndex == 0 || tableIndex > (uint)rowCount)
         {
             ThrowHelpers.ThrowInvalidDataException("Invalid handle.");
         }

@@ -89,9 +89,10 @@ internal readonly struct GrammarTables
         int rowCount, byte rowSize, int childTableRowCount, uint index)
     {
         uint firstMember =
-            ReadTableIndex(grammarFile, GetTableCellOffset(columnBase, rowCount, rowSize, index), rowCount);
-        uint firstMemberOfNext = index < (uint)rowCount ? ReadTableIndex(grammarFile,
-            GetTableCellOffset(columnBase, rowCount, rowSize, index + 1), rowCount) : (uint)childTableRowCount + 1;
+            ReadTableIndex(grammarFile, GetTableCellOffset(columnBase, rowCount, rowSize, index), childTableRowCount);
+        uint firstMemberOfNext = index < (uint)rowCount
+            ? ReadTableIndex(grammarFile, GetTableCellOffset(columnBase, rowCount, rowSize, index + 1), childTableRowCount)
+            : (uint)childTableRowCount + 1;
         Debug.Assert(firstMember <= firstMemberOfNext);
         return (firstMember, (int)(firstMemberOfNext - firstMember));
     }

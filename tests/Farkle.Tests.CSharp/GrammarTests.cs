@@ -67,6 +67,7 @@ internal class GrammarTests
             {
                 Assert.That(nonterminal.Name, Is.Not.Empty);
                 Assert.That(() => nonterminal.Attributes, Throws.Nothing);
+                Assert.That(nonterminal.Productions.Count(), Is.EqualTo(nonterminal.Productions.Count));
             }
 
             foreach (var group in grammar.Groups)

@@ -9,11 +9,11 @@
     <FsYacc Include="Parser.fsy">
       <OtherFlags>--module Farkle.Benchmarks.FsLexYacc.JsonImpl.Parser</OtherFlags>
     </FsYacc>
-    <Compile Include="Parser.fs" />
+    <Compile Include="$(FsYaccOutputFolder)Parser.fs" Link="Parser.fs" />
     <FsLex Include="Lexer.fsl">
       <OtherFlags>--unicode</OtherFlags>
     </FsLex>
-    <Compile Include="Lexer.fs" />
+    <Compile Include="$(FsLexOutputFolder)Lexer.fs" Link="Lexer.fs" />
     <Compile Include="FsLexYacc.fs" />
     <Compile Include="FParsec.fs" />
   </ItemGroup>

@@ -22,7 +22,7 @@ type Arguments =
     | [<Unique>] Html
     | [<Unique>] ``Custom-head`` of string
     | [<Unique>] ``No-css``
-    | [<Unique; AltCommandLine("--no-lr")>] ``No-lr``
+    | [<Unique; AltCommandLine("--no-lalr")>] ``No-lr``
     | [<Unique>] ``No-dfa``
     | [<Unique; Hidden>] GrammarSkeleton
     | [<Unique; Hidden; AltCommandLine("-lang")>] Language of string

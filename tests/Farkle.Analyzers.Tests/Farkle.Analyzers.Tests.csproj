@@ -16,6 +16,7 @@
     <PackageReference Include="NUnit3TestAdapter" />
     <PackageReference Include="NUnit.Analyzers" PrivateAssets="all" />
     <PackageReference Include="PolySharp" PrivateAssets="all" />
+    <PackageReference Include="System.Security.Cryptography.Pkcs" />
     <ProjectReference Include="..\..\src\Farkle\Farkle.csproj" />
     <ProjectReference Include="..\..\src\Farkle.Analyzers\Farkle.Analyzers.csproj" />
   </ItemGroup>

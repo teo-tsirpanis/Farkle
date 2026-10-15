@@ -10,6 +10,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="System.Security.Cryptography.Pkcs" />
     <ProjectReference Include="../../src/Farkle/Farkle.csproj" />
     <ProjectReference Include="../../src/Farkle.Tools.MSBuild/Farkle.Tools.MSBuild.fsproj" ReferenceOutputAssembly="false" />
     <PackageReference Include="Sigourney.Build" />

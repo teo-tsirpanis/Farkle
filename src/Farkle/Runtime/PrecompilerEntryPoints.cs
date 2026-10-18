@@ -18,7 +18,7 @@ namespace Farkle.Runtime;
 /// This class should not be directly used by user code.
 /// </summary>
 [EditorBrowsable(EditorBrowsableState.Never)]
-public static class PrecompilerEntryPoints
+public static partial class PrecompilerEntryPoints
 {
     /// <summary>
     /// Loads a precompiled <see cref="Grammar"/>.
@@ -174,4 +174,7 @@ public static class PrecompilerEntryPoints
     [RequiresUnreferencedCode(PrecompilerImplementation.RequiresUnreferencedCodeMessage)]
     internal static ComSharpObject GetPrecompilerInterface() =>
         PrecompilerInterfaceWrappers.Instance.ConvertToComSharp(new PrecompilerImplementation());
+
+    [GenerateComSharpWrappers(typeof(IPrecompilerInterface), Options = ComSharpInterfaceOptions.ComSharpWrapper)]
+    private sealed partial class PrecompilerInterfaceWrappers : ComSharpWrappers;
 }

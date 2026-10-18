@@ -11,7 +11,7 @@ using DiagnosticSeverity = ComSharp.DiagnosticSeverity;
 
 namespace Farkle.Tests.CSharp;
 
-internal class PrecompilerInterfaceTests
+internal partial class PrecompilerInterfaceTests
 {
     private IPrecompilerInterface _precompilerInterface;
 
@@ -274,4 +274,7 @@ internal class PrecompilerInterfaceTests
             log.Log((Diagnostics.DiagnosticSeverity)severity, message, code);
         }
     }
+
+    [GenerateComSharpWrappers(typeof(IPrecompilerInterface), Options = ComSharpInterfaceOptions.DotNetWrapper)]
+    private sealed partial class PrecompilerInterfaceWrappers : ComSharpWrappers;
 }

@@ -34,6 +34,7 @@
     <PackageReference Include="BitCollections" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\ComSharp.SourceGenerator\ComSharp.SourceGenerator.csproj" ReferenceOutputAssembly="false" OutputItemType="Analyzer" SetTargetFramework="TargetFramework=netstandard2.0" />
     <ProjectReference Include="..\Farkle.Analyzers\Farkle.Analyzers.csproj" ReferenceOutputAssembly="false" />
   </ItemGroup>
   <ItemGroup>

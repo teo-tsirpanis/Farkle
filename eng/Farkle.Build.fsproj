@@ -7,6 +7,7 @@
     <PackageReference Include="FSharp.Core" VersionOverride="10.1.402" />
     <PackageReference Include="NuGet.Packaging" />
     <PackageReference Include="NuGet.Protocol" />
+    <PackageReference Include="System.Security.Cryptography.Pkcs" />
     <Compile Include="build.fs" />
     <PackageReference Include="Fake.BuildServer.GitHubActions" />
     <PackageReference Include="Fake.Core.ReleaseNotes" />

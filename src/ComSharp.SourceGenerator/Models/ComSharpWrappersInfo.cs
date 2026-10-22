@@ -14,7 +14,7 @@ public sealed record InterfaceWrappersInfo(string DisplayName, string MetadataNa
     }
 }
 
-public sealed record ComSharpWrappersInfo(TypeOrNamespaceInfo Type, EquatableArray<InterfaceWrappersInfo> Interfaces);
+public sealed record ComSharpWrappersInfo(SourceTypeInfo Type, EquatableArray<InterfaceWrappersInfo> Interfaces);
 
 public static partial class Extensions
 {

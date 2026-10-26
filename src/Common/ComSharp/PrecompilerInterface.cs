@@ -63,6 +63,3 @@ internal partial interface IPrecompilerInterface
 {
     IEnumerable<IPrecompiledGrammar> DiscoverAndPrecompile(IReadOnlyCollection<Type> types, IPrecompilerOptions? options);
 }
-
-[Embedded]
-internal sealed partial class PrecompilerInterfaceWrappers : ComSharpWrappers;

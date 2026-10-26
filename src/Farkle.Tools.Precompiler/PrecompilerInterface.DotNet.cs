@@ -8,7 +8,7 @@ using System.Runtime.InteropServices;
 // Contains a .NET object model of the precompiler interface.
 // We can't return the COM# interfaces because they are internal, so we have to add yet another layer
 // of indirection.
-// We could directly work with the COM# objects if Farkle.Tools.MSBuild was rewritten to C# and had
+// We could directly work with the COM# types if Farkle.Tools.MSBuild was rewritten to C# and had
 // Farkle.Tools.Precompiler merged to it, but even then, it would keep the user assembly ALC loaded
 // for longer than before.
 

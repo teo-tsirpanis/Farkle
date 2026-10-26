@@ -188,6 +188,10 @@ let generateDocs doWatch =
         docsOutput
     ]
 
+    // Build the Farkle project and its source generators because docfx cannot do it by itself.
+    farkleProject
+    |> DotNet.build (fReleaseConfiguration >> fCommonOptions)
+
     CreateProcess.fromRawCommand "docfx" arguments
     |> CreateProcess.withToolType (ToolType.CreateLocalTool())
     |> if not doWatch then CreateProcess.ensureExitCode else id

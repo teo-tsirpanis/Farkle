@@ -3,13 +3,17 @@
 
 using System.CodeDom.Compiler;
 
-namespace Farkle.Analyzers;
+namespace Common;
 
 internal static class IndentedTextWriterExtensions
 {
     extension(IndentedTextWriter writer)
     {
         public BlockScope EnterBlock() => new(writer, "{", "}");
+
+        public BlockScope EnterBlock(string start, string end) => new(writer, start, end);
+
+        public BlockScope EnterCollectionExpression() => new(writer, "[", "]");
 
         public BlockScope EnterIndent() => new(writer, "", "");
     }

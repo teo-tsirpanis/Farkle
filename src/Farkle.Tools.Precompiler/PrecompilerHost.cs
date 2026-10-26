@@ -13,7 +13,7 @@ namespace Farkle.Tools.Precompiler;
 /// Contains logic to load an assembly into an isolated context, find
 /// an implementation of the precompiler interface, and invoke it.
 /// </summary>
-public sealed class PrecompilerHost
+public sealed partial class PrecompilerHost
 {
     private PrecompilerOptions Options { get; }
 
@@ -80,7 +80,7 @@ public sealed class PrecompilerHost
             }
             return null;
         }
-        if (precompilerInterfaceFactory.Invoke(null, null) is not ComSharpObject intfComSharp
+        if (precompilerInterfaceFactory.Invoke(null, null) is not ComSharpInstance intfComSharp
             || PrecompilerInterfaceWrappers.Instance.ConvertToDotNet(intfComSharp) is not IPrecompilerInterface intf)
         {
             Log?.IncompatiblePrecompilerInterface();
@@ -143,4 +143,7 @@ public sealed class PrecompilerHost
         host.EnsureGarbageCollected(alcWeakRef);
         return result;
     }
+
+    [GenerateComSharpWrappers(typeof(IPrecompilerInterface), Options = ComSharpInterfaceOptions.DotNetWrapper)]
+    private sealed partial class PrecompilerInterfaceWrappers : ComSharpWrappers;
 }

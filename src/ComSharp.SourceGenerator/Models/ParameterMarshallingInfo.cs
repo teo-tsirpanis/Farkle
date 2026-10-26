@@ -25,7 +25,7 @@ public abstract record ParameterMarshallingInfo
     {
         public static ComSharpInterface Instance { get; } = new();
 
-        public override string GetComSharpType(string dotNetType) => "ComSharpObject";
+        public override string GetComSharpType(string dotNetType) => "ComSharpInstance";
     }
 
     public sealed record Tuple(bool IsValueTuple, EquatableArray<string> ElementTypeNames,

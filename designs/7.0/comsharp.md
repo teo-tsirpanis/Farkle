@@ -28,23 +28,23 @@ public interface ICalculator
 
 COM# interfaces cannot be generic.
 
-### Object
+### Instance
 
-Each assembly has its own definition of a COM# interface, which means that two assemblies cannot directly exchange objects implementing COM# interfaces. Instead, they have to convert them to a COM# object.
+Each assembly has its own definition of a COM# interface, which means that two assemblies cannot directly exchange objects implementing COM# interfaces. Instead, they have to convert them to a COM# instance.
 
-A COM# object is an interoperable representation of an object that implements one or more COM# interfaces. It is defined as a `ValueTuple<object?, IReadOnlyList<Delegate>>`. The first member of the tuple is called the _source object_, and the second member is a [virtual method table][vtable], called the _vtable_.
+A COM# instance is an interoperable representation of an object that implements one or more COM# interfaces. It is defined as a `ValueTuple<object?, IReadOnlyList<Delegate>>`. The first member of the tuple is called the _source object_, and the second member is a [virtual method table][vtable], called the _vtable_.
 
-The source object is what gives the COM# object its identity; two COM# objects are considered equal if and only if their source objects are equal. A COM# object with a `null` source object is considered a null COM# object.
+The source object is what gives the COM# instance its identity; two COM# instances are considered equal if and only if their source objects are equal. A COM# instance with a `null` source object is considered a null COM# instance.
 
 The vtable is an array of delegates that allow calling the methods defined in a COM# interface. The following sections detail how the vtable is constructed.
 
 The first delegate of a vtable is called the _query interface function_, and is always a `Func<object?, Guid, IReadOnlyList<Delegate>?>` which is used to query whether the source object implements a COM# interface with a given IID. If the object implements the requested interface, the delegate returns a vtable for that interface; otherwise, it returns `null`. The subsequent delegates correspond to the interface methods, in the order they are declared in the interface.
 
-A vtable does not signify which interface it implements, but this is not a problem, because consumers of any COM# object can use the query interface function to obtain the vtable for any interface they want.
+A vtable does not signify which interface it implements, but this is not a problem, because consumers of any COM# instance can use the query interface function to obtain the vtable for any interface they want.
 
 ### Shared assemblies
 
-As mentioned before, two assemblies that exchange COM# objects are not supposed to be directly referenced. There are however some assemblies that both reference, known as _shared assemblies_. The set of shared assemblies consists of at least the "system" assemblies that are required to implement the specification, but may also include other assemblies that have types that will be exchanged in a COM# interface.
+As mentioned before, two assemblies that exchange COM# instances are not supposed to be directly referenced. There are however some assemblies that both reference, known as _shared assemblies_. The set of shared assemblies consists of at least the "system" assemblies that are required to implement the specification, but may also include other assemblies that have types that will be exchanged in a COM# interface.
 
 ### Inheritance
 
@@ -66,7 +66,7 @@ Each member of a COM# interface corresponds to one or more entries in its vtable
 The following types are supported as parameters and return types in COM# interfaces. In some cases, the type gets marshalled to another type when passed through the vtable delegate.
 
 * Types that are declared in a shared assembly — closed under generic specializations, arrays, and function pointers — are marshalled unchanged.
-* COM# interfaces are marshalled as COM# objects, with a vtable that corresponds to the interface type.
+* COM# interfaces are marshalled as COM# instances, with a vtable that corresponds to the interface type.
 * Enums that are not declared in a shared assembly are marshalled as their underlying type.
 * Unmanaged pointers of any type are marshalled as `IntPtr`.
 * By-reference parameters of a type declared in a shared assembly — closed under generic specializations, arrays, and function pointers — are marshalled as spans of that type, that contain the reference. If the parameter is an `in` parameter, it is marshalled as `ReadOnlySpan<T>`, otherwise as `Span<T>`.
@@ -104,7 +104,7 @@ A COM# interface cannot require implementing an interface defined under a differ
 ## Future directions
 
 * __Using function pointers in vtables.__ Using function pointers instead of delegates in vtables was considered — and would have simplified some marshalling rules, but was rejected for now, mainly because F# does not support function pointers, and also because of the reduced safety and the corruption risks if COM# interface definitions between assemblies diverge. This might be reconsidered in the future.
-* __Activation.__ The COM# equivalent of COM activation would be a standardized way to create COM# objects from a given `System.Reflection.Assembly` and a GUID representing the class (CLSID), by calling a static method in a predefined place in the assembly. This is not currently specified. Each implementation will have to specify its own COM# "entry point" for an assembly, that will have to be called with reflection.
+* __Activation.__ The COM# equivalent of COM activation would be a standardized way to create COM# instances from a given `System.Reflection.Assembly` and a GUID representing the class (CLSID), by calling a static method in a predefined place in the assembly. This is not currently specified. Each implementation will have to specify its own COM# "entry point" for an assembly, that will have to be called with reflection.
 
 [abi]: https://en.wikipedia.org/wiki/Application_binary_interface
 [com]: https://en.wikipedia.org/wiki/Component_Object_Model

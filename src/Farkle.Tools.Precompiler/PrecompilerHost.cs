@@ -80,7 +80,7 @@ public sealed partial class PrecompilerHost
             }
             return null;
         }
-        if (precompilerInterfaceFactory.Invoke(null, null) is not ComSharpObject intfComSharp
+        if (precompilerInterfaceFactory.Invoke(null, null) is not ComSharpInstance intfComSharp
             || PrecompilerInterfaceWrappers.Instance.ConvertToDotNet(intfComSharp) is not IPrecompilerInterface intf)
         {
             Log?.IncompatiblePrecompilerInterface();

@@ -157,7 +157,7 @@ public static partial class PrecompilerEntryPoints
     }
 
     /// <summary>
-    /// Returns a COM# object that implements the precompiler interface.
+    /// Returns a COM# instance that implements the precompiler interface.
     /// </summary>
     /// <remarks>
     /// <para>
@@ -167,12 +167,12 @@ public static partial class PrecompilerEntryPoints
     /// </para>
     /// <para>
     /// This method gets called by the precompiler host via reflection. The COM# interfaces implemented by the
-    /// returned object are an implementation detail that can change at any time, and should not be used by
+    /// returned instance are an implementation detail that can change at any time, and should not be used by
     /// third-party code. This method's return type might also change in the future.
     /// </para>
     /// </remarks>
     [RequiresUnreferencedCode(PrecompilerImplementation.RequiresUnreferencedCodeMessage)]
-    internal static ComSharpObject GetPrecompilerInterface() =>
+    internal static ComSharpInstance GetPrecompilerInterface() =>
         PrecompilerInterfaceWrappers.Instance.ConvertToComSharp(new PrecompilerImplementation());
 
     [GenerateComSharpWrappers(typeof(IPrecompilerInterface), Options = ComSharpInterfaceOptions.ComSharpWrapper)]

@@ -5,7 +5,7 @@
 #nullable enable
 
 global using ComSharpVtable = System.Collections.Generic.IReadOnlyList<System.Delegate>;
-global using ComSharpObject = (object? SourceObject, System.Collections.Generic.IReadOnlyList<System.Delegate> Vtable);
+global using ComSharpInstance = (object? SourceObject, System.Collections.Generic.IReadOnlyList<System.Delegate> Vtable);
 
 using Microsoft.CodeAnalysis;
 using System.Diagnostics.CodeAnalysis;
@@ -56,18 +56,18 @@ internal abstract class ComSharpWrappers
 
     protected abstract DotNetWrapper CreateDotNetWrapper(object sourceObject, ComSharpVtable vtable);
 
-    // Because COM# objects are value tuples, they can't work with nullable reference types.
+    // Because COM# instances are value tuples, they can't work with nullable reference types.
     // In order to avoid !s in marshalling code, mark method signatures as nullable-oblivious.
 #nullable disable annotations
 
     /// <summary>
-    /// Converts a .NET interface object to a COM# object with the vtable for the exact type.
+    /// Converts a .NET interface object to a COM# instance with the vtable for the exact type.
     /// </summary>
     /// <remarks>
     /// This interface is intended to be used when marshalling arguments for a wrapper.
     /// User code is recommended to use <see cref="ConvertToComSharp"/> instead.
     /// </remarks>
-    public ComSharpObject Marshal<T>(T source) where T : class
+    public ComSharpInstance Marshal<T>(T source) where T : class
     {
         switch (source)
         {
@@ -84,13 +84,13 @@ internal abstract class ComSharpWrappers
     }
 
     /// <summary>
-    /// Converts a COM# object with the vtable for a particular interface type, to a .NET object of the exact type.
+    /// Converts a COM# instance with the vtable for a particular interface type, to a .NET object of the exact type.
     /// </summary>
     /// <remarks>
     /// This interface is intended to be used when marshalling arguments for a wrapper.
     /// User code is recommended to use <see cref="ConvertToDotNet"/> instead.
     /// </remarks>
-    public T Unmarshal<T>(ComSharpObject obj) where T : class
+    public T Unmarshal<T>(ComSharpInstance obj) where T : class
     {
         switch (obj.SourceObject)
         {
@@ -107,25 +107,25 @@ internal abstract class ComSharpWrappers
 #nullable restore annotations
 
     /// <summary>
-    /// Creates a COM# object from a .NET object.
+    /// Creates a COM# instance from a .NET object.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// The returned COM# object's query interface function supports all interfaces known to this
-    /// <see cref="ComSharpWrappers"/> instance, that is implemented by <paramref name="source"/>.
+    /// The returned COM# instance's query interface function supports all interfaces known to this
+    /// <see cref="ComSharpWrappers"/> instance, that are implemented by <paramref name="source"/>.
     /// </para>
     /// <para>
     /// This method is the "exit point" from the .NET to the COM# type systems. It is intended to be called
-    /// at the start of an interaction, with the returned COM# object being returned to consumers via reflection.
+    /// at the start of an interaction, with the returned COM# instance being returned to consumers via reflection.
     /// </para>
     /// </remarks>
-    public ComSharpObject ConvertToComSharp(object? source)
+    public ComSharpInstance ConvertToComSharp(object? source)
     {
         return ((source as DotNetWrapper)?.SourceObject ?? source, _defaultVtable);
     }
 
     /// <summary>
-    /// Creates a .NET object from a COM# object.
+    /// Creates a .NET object from a COM# instance.
     /// </summary>
     /// <remarks>
     /// <para>
@@ -134,10 +134,10 @@ internal abstract class ComSharpWrappers
     /// </para>
     /// <para>
     /// This method is the "entry point" from the COM# to the .NET type systems. It is intended to be called
-    /// at the start of an interaction, with a COM# object that was obtained via reflection.
+    /// at the start of an interaction, with a COM# instance that was obtained via reflection.
     /// </para>
     /// </remarks>
-    public object? ConvertToDotNet(ComSharpObject obj)
+    public object? ConvertToDotNet(ComSharpInstance obj)
     {
         if (obj.SourceObject is null)
         {

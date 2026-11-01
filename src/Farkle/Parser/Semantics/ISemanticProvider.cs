@@ -4,6 +4,18 @@
 namespace Farkle.Parser.Semantics;
 
 /// <summary>
+/// Provides a base interface for semantic providers that can return values of any type.
+/// </summary>
+/// <typeparam name="TChar">The type of characters that are parsed. Usually it is
+/// <see cref="char"/> or <see cref="byte"/> (not supported by Farkle's built-in
+/// parsers).</typeparam>
+/// <remarks>
+/// This interface is intended for internal use only. External code should use
+/// <see cref="ISemanticProvider{TChar, T}"/> instead.
+/// </remarks>
+public interface ISemanticProvider<TChar> : ITokenSemanticProvider<TChar>, IProductionSemanticProvider;
+
+/// <summary>
 /// Provides an interface to customize the semantic analysis stage of Farkle's parsers.
 /// </summary>
 /// <typeparam name="TChar">The type of characters that are parsed. Usually it is
@@ -21,5 +33,4 @@ namespace Farkle.Parser.Semantics;
 /// root symbol of the language are of type <typeparamref name="T"/>.
 /// </para>
 /// </remarks>
-public interface ISemanticProvider<TChar, out T> : ITokenSemanticProvider<TChar>,
-    IProductionSemanticProvider;
+public interface ISemanticProvider<TChar, out T> : ISemanticProvider<TChar>;

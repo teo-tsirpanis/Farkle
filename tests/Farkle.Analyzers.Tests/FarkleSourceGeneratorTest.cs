@@ -17,6 +17,5 @@ public class FarkleSourceGeneratorTest<TSourceGenerator> : CSharpSourceGenerator
 
     protected override ParseOptions CreateParseOptions() =>
         // Use the C# language version corresponding to the earliest framework we target.
-        // TODO-NET8: Change to C# 14 when we drop .NET 8 support.
-        ((CSharpParseOptions)base.CreateParseOptions()).WithLanguageVersion(LanguageVersion.CSharp12);
+        ((CSharpParseOptions)base.CreateParseOptions()).WithLanguageVersion(LanguageVersion.CSharp14);
 }

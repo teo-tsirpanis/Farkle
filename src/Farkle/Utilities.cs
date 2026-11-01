@@ -19,13 +19,9 @@ internal static class Utilities
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static unsafe ReadOnlySpan<TTo> BitCastSpan<TFrom, TTo>(ReadOnlySpan<TFrom> source)
+    public static ReadOnlySpan<TTo> BitCastSpan<TFrom, TTo>(ReadOnlySpan<TFrom> source)
     {
-#if NET9_0_OR_GREATER
         return Unsafe.BitCast<ReadOnlySpan<TFrom>, ReadOnlySpan<TTo>>(source);
-#else
-        return *(ReadOnlySpan<TTo>*)&source;
-#endif
     }
 
     /// <summary>

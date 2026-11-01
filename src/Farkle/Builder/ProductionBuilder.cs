@@ -96,11 +96,7 @@ public sealed class ProductionBuilder : IProductionBuilder<ProductionBuilder>, I
         {
             return Empty;
         }
-#if NET9_0_OR_GREATER // ReadOnlySpan is not covariant prior to .NET 9
         return new(members);
-#else
-        return new(members.ToArray());
-#endif
     }
 
     /// <inheritdoc/>

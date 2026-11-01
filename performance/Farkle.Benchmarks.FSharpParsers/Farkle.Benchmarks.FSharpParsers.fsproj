@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>$(TargetFrameworkMain)</TargetFramework>
     <!-- Temporarily disabled due to incompatibilities with FSYacc. -->
     <!-- See https://github.com/fsprojects/FsLexYacc/pull/227. -->
     <!--<Nullable>enable</Nullable>-->

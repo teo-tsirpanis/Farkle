@@ -1,5 +1,6 @@
 <Project>
   <PropertyGroup>
+    <TargetFrameworkMain>net10.0</TargetFrameworkMain>
     <PatchNupkgScript>$(MSBuildThisFileDirectory)patch-nuspec.ps1</PatchNupkgScript>
   </PropertyGroup>
 </Project>

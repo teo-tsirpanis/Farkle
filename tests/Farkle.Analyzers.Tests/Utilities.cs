@@ -61,6 +61,7 @@ public static class Utilities
                 Assert.Inconclusive("Could not create a metadata reference for the Farkle assembly.");
             }
 
+            test.ReferenceAssemblies = ReferenceAssemblies.Net.Net100;
             test.TestState.OutputKind = OutputKind.ConsoleApplication; // Allow top-level statements.
             test.TestState.AdditionalReferences.Add(FarkleReference);
         }

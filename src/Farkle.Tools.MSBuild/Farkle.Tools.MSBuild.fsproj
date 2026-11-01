@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <Import Project="../NuGet.props" />
   <PropertyGroup>
-    <TargetFrameworks>net8.0;netstandard2.0</TargetFrameworks>
+    <TargetFrameworks>$(TargetFrameworkMain);netstandard2.0</TargetFrameworks>
     <Description>Farkle's integration with MSBuild. Using this package on a project will precompile its grammars ahead of time when it is built.</Description>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageTags>$(PackageTags);msbuild;sigourney</PackageTags>

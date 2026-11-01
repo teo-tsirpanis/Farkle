@@ -6,7 +6,7 @@
   <Choose>
     <When Condition="$(MSBuildRuntimeType) == Core OR ('$(MSBuildVersion)' != '' AND $([System.Version]::Parse($(MSBuildVersion)).Major) &gt;= 18)">
       <PropertyGroup>
-        <FarkleTaskAssembly>$(MSBuildThisFileDirectory)../tools/net8.0/Farkle.Tools.MSBuild.dll</FarkleTaskAssembly>
+        <FarkleTaskAssembly>$(MSBuildThisFileDirectory)../tools/net10.0/Farkle.Tools.MSBuild.dll</FarkleTaskAssembly>
         <FarklePrecompilerTaskRuntime>NET</FarklePrecompilerTaskRuntime>
       </PropertyGroup>
     </When>

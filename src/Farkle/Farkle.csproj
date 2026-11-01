@@ -1,12 +1,11 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <Import Project="../NuGet.props" />
   <PropertyGroup>
-    <TargetFrameworks>net10.0;net8.0</TargetFrameworks>
+    <TargetFramework>$(TargetFrameworkMain)</TargetFramework>
     <LangVersion>14</LangVersion>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <Nullable Condition="'$(TargetFramework)' == 'netstandard2.0'">annotations</Nullable>
-    <IsAotCompatible Condition="$([MSBuild]::GetTargetFrameworkIdentifier('$(TargetFramework)')) == '.NETCoreApp'">true</IsAotCompatible>
+    <IsAotCompatible>true</IsAotCompatible>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <RootNamespace>Farkle</RootNamespace>
@@ -20,7 +19,7 @@
     <Compile Include="../Common/ComSharp/**/*.cs" LinkBase="ComSharp" />
     <!-- Use the earliest supported framework. We can't use "any", because the package would be installable
     even on frameworks we don't provide binaries for. -->
-    <Content Include="Farkle.fs" Pack="true" PackagePath="contentFiles/fs/net8.0" BuildAction="Compile" />
+    <Content Include="Farkle.fs" Pack="true" PackagePath="contentFiles/fs/$(TargetFrameworkMain)" BuildAction="Compile" />
     <Content Include="Farkle.fsx" Pack="true" PackagePath="content" />
     <None Include="README.md" Pack="true" PackagePath="\" />
     <None Include="../Farkle.Analyzers/bin/$(Configuration)/netstandard2.0/Farkle.Analyzers.dll" Pack="true" PackagePath="analyzers/dotnet" Visible="false" />

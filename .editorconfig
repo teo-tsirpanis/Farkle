@@ -153,3 +153,9 @@ dotnet_diagnostic.IDE0005.severity = warning
 
 # IDE0073: Require file header
 dotnet_diagnostic.IDE0073.severity = error
+
+# RS1038: Compiler extensions should be implemented in assemblies with compiler-provided references
+# Rationale: We bundle compiler with IDE extensions in the same assembly, but keep the latter in a
+# separate Fixers namespace. A test ensures that APIs not in it do not cause Workspaces assemblies
+# to be loaded.
+dotnet_diagnostic.RS1038.severity = none

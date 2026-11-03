@@ -18,28 +18,18 @@ internal readonly struct DefaultParserImplementation<TChar>
 {
     public Grammar Grammar { get; }
     private readonly LrWithoutConflicts _lrStateMachine;
-    private readonly ISemanticProvider<TChar> _semanticProvider;
-    public Tokenizer<TChar> Tokenizer { get; }
 
-    private DefaultParserImplementation(Grammar grammar, LrWithoutConflicts lrStateMachine, ISemanticProvider<TChar> semanticProvider, Tokenizer<TChar> tokenizer)
+    public ISemanticProvider<TChar> SemanticProvider { get; init; }
+    public Tokenizer<TChar> Tokenizer { get; init; }
+
+    public DefaultParserImplementation(Grammar grammar, LrWithoutConflicts lrStateMachine, ISemanticProvider<TChar> semanticProvider, Tokenizer<TChar> tokenizer)
     {
         Grammar = grammar;
         _lrStateMachine = lrStateMachine;
         _lrStateMachine.PrepareForParsing();
-        _semanticProvider = semanticProvider;
+        SemanticProvider = semanticProvider;
         Tokenizer = tokenizer;
     }
-
-    public static DefaultParserImplementation<TChar> Create<T>(Grammar grammar, LrWithoutConflicts lrStateMachine, ISemanticProvider<TChar, T> semanticProvider, Tokenizer<TChar> tokenizer)
-    {
-        return new(grammar, lrStateMachine, semanticProvider, tokenizer);
-    }
-
-    public DefaultParserImplementation<TChar> WithTokenizer(Tokenizer<TChar> tokenizer) =>
-        new(Grammar, _lrStateMachine, _semanticProvider, tokenizer);
-
-    public DefaultParserImplementation<TChar> WithSemanticProvider<T>(ISemanticProvider<TChar, T> semanticProvider) =>
-        new(Grammar, _lrStateMachine, semanticProvider, Tokenizer);
 
     private int Reduce(ref ParserInputReader<TChar> input, in GrammarTablesHotData hotData,
         ref ValueStack<int> stateStack, ref ValueStack<object?> semanticValueStack, ProductionHandle production)
@@ -47,7 +37,7 @@ internal readonly struct DefaultParserImplementation<TChar>
         int membersLength = hotData.GetProductionMemberCount(production);
         int goFromState = stateStack.Peek(membersLength);
         int gotoState = _lrStateMachine.GetGoto(goFromState, hotData.GetProductionHead(production));
-        object? semanticValue = _semanticProvider.Fuse(ref input.State, production, semanticValueStack.PeekMany(membersLength));
+        object? semanticValue = SemanticProvider.Fuse(ref input.State, production, semanticValueStack.PeekMany(membersLength));
         semanticValueStack.PopMany(membersLength);
         semanticValueStack.Push(semanticValue);
         stateStack.PopMany(membersLength);
@@ -59,9 +49,9 @@ internal readonly struct DefaultParserImplementation<TChar>
     {
         GrammarTablesHotData hotData = new(Grammar);
         int currentState = stateStack.Peek();
-        bool foundToken = Tokenizer.TryGetNextToken(ref input, _semanticProvider, out TokenizerResult token);
         while (true)
         {
+            bool foundToken = Tokenizer.TryGetNextToken(ref input, SemanticProvider, out TokenizerResult token);
             if (!foundToken)
             {
                 if (!input.IsFinalBlock)
@@ -104,7 +94,6 @@ internal readonly struct DefaultParserImplementation<TChar>
                     currentState = action.ShiftState;
                     stateStack.Push(currentState);
                     semanticValueStack.Push(token.Data);
-                    foundToken = Tokenizer.TryGetNextToken(ref input, _semanticProvider, out token);
                     continue;
                 }
                 if (action.IsReduce)
@@ -123,7 +112,6 @@ internal readonly struct DefaultParserImplementation<TChar>
                 TokenSymbolAttributes flags = hotData.GetTokenSymbolFlags(token.Symbol);
                 if ((flags & TokenSymbolAttributes.Noise) != 0)
                 {
-                    foundToken = Tokenizer.TryGetNextToken(ref input, _semanticProvider, out token);
                     continue;
                 }
             }

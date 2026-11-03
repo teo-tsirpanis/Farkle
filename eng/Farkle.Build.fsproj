@@ -10,7 +10,6 @@
     <PackageReference Include="System.Security.Cryptography.Pkcs" />
     <Compile Include="build.fs" />
     <PackageReference Include="Fake.BuildServer.GitHubActions" />
-    <PackageReference Include="Fake.Core.ReleaseNotes" />
     <PackageReference Include="Fake.Core.Target" />
     <PackageReference Include="Fake.Core.UserInput" />
     <PackageReference Include="Fake.IO.FileSystem" />

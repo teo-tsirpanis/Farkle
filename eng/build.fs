@@ -64,21 +64,17 @@ let packOutputDirectory = "./bin/"
 
 let nugetPackages = !! "./bin/*.nupkg"
 
-// Read additional information from the release notes document
-let releaseInfo = lazy (ReleaseNotes.load "./RELEASE_NOTES.md")
-
-let nugetVersion =
-    let nugetVersion = releaseInfo.Value.NugetVersion
+let versionSuffix =
     match BuildServer.buildServer with
     | GitHubActions when GitHubActions.Environment.EventName <> "release" ->
-        sprintf "%s-ci.%s+%s" nugetVersion GitHubActions.Environment.RunNumber GitHubActions.Environment.Sha
-    | _ -> nugetVersion
+        sprintf "ci.%s+%s" GitHubActions.Environment.RunNumber GitHubActions.Environment.Sha
+    | _ -> ""
 
 let fReleaseConfiguration x = {x with DotNet.BuildOptions.Configuration = configuration}
 
 let inline fCommonOptions x =
     DotNet.Options.withAdditionalArgs [
-        sprintf "/p:Version=%s" nugetVersion
+        sprintf "/p:VersionSuffix=%s" versionSuffix
     ] x
 
 let handleFailure (p: ProcessResult) =

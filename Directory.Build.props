@@ -1,6 +1,7 @@
 <Project>
   <Import Project="$(MSBuildThisFileDirectory)eng/common.props" />
   <PropertyGroup>
+    <VersionPrefix>7.2.0</VersionPrefix>
     <RepositoryUrl>https://github.com/teo-tsirpanis/Farkle</RepositoryUrl>
   </PropertyGroup>
 </Project>

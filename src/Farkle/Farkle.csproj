@@ -13,7 +13,7 @@
     <Description>Farkle is a .NET library for building fast, reliable LR(1) text parsers in C# and F#.</Description>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <EnablePackageValidation>true</EnablePackageValidation>
-    <PackageValidationBaselineVersion>7.1.0</PackageValidationBaselineVersion>
+    <PackageValidationBaselineVersion>7.1.1</PackageValidationBaselineVersion>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="../Common/ComSharp/**/*.cs" LinkBase="ComSharp" />

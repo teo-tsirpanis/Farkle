@@ -83,7 +83,7 @@ file sealed class VerifyCS : FarkleSourceGeneratorTest<ProductionBuilderFactoryG
                 {
                 }
             }
-            """));
+            """.ReplaceLineEndings("\r\n")));
         TestState.GeneratedSources.Add((typeof(ProductionBuilderFactoryGenerator), ProductionBuilderFactoryGenerator.ProductionBoilerplateName, ProductionBuilderFactoryGenerator.ProductionBoilerplateSource));
         TestState.GeneratedSources.Add((typeof(ProductionBuilderFactoryGenerator), ProductionBuilderFactoryGenerator.UseEnhancedSyntaxAttributeBoilerplateName, ProductionBuilderFactoryGenerator.UseEnhancedSyntaxAttributeBoilerplateSource));
     }

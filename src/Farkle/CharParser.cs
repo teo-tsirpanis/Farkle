@@ -42,6 +42,8 @@ public abstract class CharParser<T> : IParser<char, T>
 
     internal abstract Tokenizer<char> GetTokenizer();
 
+    internal abstract ParserOptions GetOptions();
+
     internal virtual object? GetServiceCore(Type serviceType)
     {
         if (serviceType == typeof(IGrammarProvider))
@@ -61,6 +63,8 @@ public abstract class CharParser<T> : IParser<char, T>
 
     private protected virtual CharParser<TNew> WithSemanticProviderCore<TNew>(Func<IGrammarProvider, ISemanticProvider<char, TNew>> semanticProviderFactory) =>
         WithSemanticProviderCore(semanticProviderFactory(GetGrammarProvider()));
+
+    internal abstract CharParser<T> WithOptionsCore(ParserOptions options);
 
     /// <summary>
     /// Implements <see cref="IServiceProvider.GetService(Type)"/>.
@@ -207,6 +211,18 @@ public abstract class CharParser<T> : IParser<char, T>
     {
         ArgumentNullException.ThrowIfNull(components);
         return WithTokenizerChain(components.AsSpan());
+    }
+
+    /// <summary>
+    /// Changes the lookahead correction setting of the <see cref="CharParser{T}"/>.
+    /// </summary>
+    /// <param name="value">The setting's new value.</param>
+    /// <remarks>
+    /// See the documentation of <see cref="LookaheadCorrectionOption"/> for more information.
+    /// </remarks>
+    public CharParser<T> WithLookaheadCorrection(LookaheadCorrectionOption value)
+    {
+        return WithOptionsCore(GetOptions() with { LookaheadCorrection = value });
     }
 }
 

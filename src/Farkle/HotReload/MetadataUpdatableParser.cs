@@ -50,6 +50,8 @@ internal sealed class MetadataUpdatableParser<T, TOriginal> : CharParser<T>, IMe
     /// </remarks>
     private readonly Func<CharParser<TOriginal>, CharParser<T>> _semanticProviderEnricher;
 
+    private readonly ParserOptions _options;
+
     /// <summary>
     /// A tuple that holds the original and the transformed parser.
     /// </summary>
@@ -60,7 +62,7 @@ internal sealed class MetadataUpdatableParser<T, TOriginal> : CharParser<T>, IMe
     private volatile Tuple<CharParser<TOriginal>, CharParser<T>>? _parser;
 
     private CharParser<T> TransformParser(CharParser<TOriginal> parser) =>
-        _semanticProviderEnricher(_tokenizerEnricher(parser));
+        _semanticProviderEnricher(_tokenizerEnricher(parser)).WithOptionsCore(_options);
 
     private CharParser<T> GetParser()
     {
@@ -75,19 +77,24 @@ internal sealed class MetadataUpdatableParser<T, TOriginal> : CharParser<T>, IMe
         }
     }
 
-    private CharParser<T> WithTokenizerEnricher(Func<CharParser<TOriginal>, CharParser<TOriginal>> fTokenizer) =>
-        new MetadataUpdatableParser<T, TOriginal>(_metadataUpdateKey, _parserFactory, fTokenizer, _semanticProviderEnricher, _parser?.Item1);
+    private MetadataUpdatableParser<T, TOriginal> WithTokenizerEnricher(Func<CharParser<TOriginal>, CharParser<TOriginal>> fTokenizer) =>
+        new(_metadataUpdateKey, _parserFactory, fTokenizer, _semanticProviderEnricher, _options, _parser?.Item1);
 
-    private CharParser<TNew> WithSemanticProviderEnricher<TNew>(Func<CharParser<TOriginal>, CharParser<TNew>> fSemanticProvider) =>
-        new MetadataUpdatableParser<TNew, TOriginal>(_metadataUpdateKey, _parserFactory, _tokenizerEnricher, fSemanticProvider, _parser?.Item1);
+    private MetadataUpdatableParser<TNew, TOriginal> WithSemanticProviderEnricher<TNew>(Func<CharParser<TOriginal>, CharParser<TNew>> fSemanticProvider) =>
+        new(_metadataUpdateKey, _parserFactory, _tokenizerEnricher, fSemanticProvider, _options, _parser?.Item1);
+
+    internal override MetadataUpdatableParser<T, TOriginal> WithOptionsCore(ParserOptions options) =>
+        _options.Equals(options) ? this :
+            new(_metadataUpdateKey, _parserFactory, _tokenizerEnricher, _semanticProviderEnricher, options, _parser?.Item1);
 
     public MetadataUpdatableParser(Type metadataUpdateKey, Func<CharParser<TOriginal>> parserFactory, Func<CharParser<TOriginal>, CharParser<TOriginal>> tokenizerEnricher,
-        Func<CharParser<TOriginal>, CharParser<T>> semanticProviderEnricher, CharParser<TOriginal>? originalParser)
+        Func<CharParser<TOriginal>, CharParser<T>> semanticProviderEnricher, ParserOptions options, CharParser<TOriginal>? originalParser)
     {
         _metadataUpdateKey = metadataUpdateKey;
         _parserFactory = parserFactory;
         _semanticProviderEnricher = semanticProviderEnricher;
         _tokenizerEnricher = tokenizerEnricher;
+        _options = options;
         if (originalParser is not null)
         {
             _parser = Tuple.Create(originalParser, TransformParser(originalParser));
@@ -101,6 +108,8 @@ internal sealed class MetadataUpdatableParser<T, TOriginal> : CharParser<T>, IMe
     internal override IGrammarProvider GetGrammarProvider() => GetParser().GetGrammarProvider();
 
     internal override Tokenizer<char> GetTokenizer() => GetParser().GetTokenizer();
+
+    internal override ParserOptions GetOptions() => _options;
 
     internal override object? GetServiceCore(Type serviceType)
     {
@@ -140,5 +149,5 @@ internal sealed class MetadataUpdatableParser<T, TOriginal> : CharParser<T>, IMe
 internal static class MetadataUpdatableParser
 {
     public static MetadataUpdatableParser<T, T> Create<T>(Type metadataUpdateKey, Func<CharParser<T>> parserFactory, CharParser<T>? initialParser = null) =>
-        new(metadataUpdateKey, parserFactory, p => p, p => p, initialParser ?? parserFactory());
+        new(metadataUpdateKey, parserFactory, p => p, p => p, new ParserOptions(), initialParser ?? parserFactory());
 }

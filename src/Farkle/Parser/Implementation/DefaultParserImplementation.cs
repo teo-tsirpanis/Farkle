@@ -8,6 +8,7 @@ using Farkle.Grammars.StateMachines;
 using Farkle.Parser.Semantics;
 using Farkle.Parser.Tokenizers;
 using System.Collections.Immutable;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
 using static Farkle.Parser.Implementation.DefaultParserImplementation;
@@ -21,6 +22,7 @@ internal readonly struct DefaultParserImplementation<TChar>
 
     public ISemanticProvider<TChar> SemanticProvider { get; init; }
     public Tokenizer<TChar> Tokenizer { get; init; }
+    public ParserOptions Options { get; init; } = new();
 
     public DefaultParserImplementation(Grammar grammar, LrWithoutConflicts lrStateMachine, ISemanticProvider<TChar> semanticProvider, Tokenizer<TChar> tokenizer)
     {
@@ -43,6 +45,114 @@ internal readonly struct DefaultParserImplementation<TChar>
         stateStack.PopMany(membersLength);
         stateStack.Push(gotoState);
         return gotoState;
+    }
+
+    /// <summary>
+    /// Checks whether the parser will accept the given symbol after performing one or more reductions.
+    /// No semantic actions are executed, and the parser's state stack remains unchanged after this function returns.
+    /// </summary>
+    /// <param name="hotData">The grammar's <see cref="GrammarTablesHotData"/>.</param>
+    /// <param name="stateStack">The parser's state stack.</param>
+    /// <param name="symbol">The symbol that caused the reduction.</param>
+    /// <param name="reduceProduction">The first production to reduce.</param>
+    private bool TrySpeculativeReduce(in GrammarTablesHotData hotData, ref ValueStack<int> stateStack, TokenSymbolHandle symbol, ProductionHandle reduceProduction)
+    {
+        // The current state we are at. Instead of pushing it to the stack and peeking, we keep track of it separately.
+        // This way, we actually push only when we reduce an empty production.
+        int currentState = stateStack.Peek();
+        // The number of items that were on the stack in the beginning. We must not pop beyond this point.
+        int originalStackCount = stateStack.Count;
+        // The number of items that we have non-destructively popped beyond the original stack count.
+        int virtualPoppedCount = 0;
+        LrAction action;
+        while (true)
+        {
+            int membersLength = hotData.GetProductionMemberCount(reduceProduction);
+            if (membersLength == 0)
+            {
+                int gotoState = _lrStateMachine.GetGoto(currentState, hotData.GetProductionHead(reduceProduction));
+                stateStack.Push(gotoState);
+                currentState = gotoState;
+            }
+            else
+            {
+                int extraPushedCount = stateStack.Count - originalStackCount;
+                int goFromStateIndex;
+                if (membersLength <= extraPushedCount)
+                {
+                    goFromStateIndex = membersLength;
+                }
+                else
+                {
+                    goFromStateIndex = virtualPoppedCount + membersLength;
+                }
+                int goFromState = stateStack.Peek(goFromStateIndex);
+                int gotoState = _lrStateMachine.GetGoto(goFromState, hotData.GetProductionHead(reduceProduction));
+                currentState = gotoState;
+                int statesToPop = membersLength - 1;
+                // First pop from the extra pushed states, then virtually pop what was left.
+                if (statesToPop >= extraPushedCount)
+                {
+                    stateStack.PopMany(extraPushedCount);
+                    statesToPop -= extraPushedCount;
+                }
+                virtualPoppedCount += statesToPop;
+            }
+            action = _lrStateMachine.GetAction(currentState, symbol);
+            if (!action.IsReduce)
+            {
+                break;
+            }
+            reduceProduction = action.ReduceProduction;
+        }
+        Debug.Assert(stateStack.Count >= originalStackCount);
+        // Restore the stack to its original state.
+        if (stateStack.Count > originalStackCount)
+        {
+            stateStack.PopMany(stateStack.Count - originalStackCount);
+        }
+        return action.IsShift;
+    }
+
+    private ImmutableArray<string?> GetExpectedSymbols(in GrammarTablesHotData hotData, ref ValueStack<int> stateStack)
+    {
+        var builder = ImmutableArray.CreateBuilder<string?>();
+        int state = stateStack.Peek();
+        foreach (var action in _lrStateMachine[state].Actions)
+        {
+            if ((action.Key.Attributes & TokenSymbolAttributes.Hidden) != 0)
+            {
+                continue;
+            }
+            if (action.Value.IsError)
+            {
+                continue;
+            }
+            if (action.Value.IsShift)
+            {
+                builder.Add(action.Key.Name);
+            }
+            else if (action.Value.IsReduce && (Options.LookaheadCorrection == LookaheadCorrectionOption.Never || TrySpeculativeReduce(in hotData, ref stateStack, action.Key.Handle, action.Value.ReduceProduction)))
+            {
+                builder.Add(action.Key.Name);
+            }
+        }
+        if (_lrStateMachine[state].EndOfFileActions.Count > 0)
+        {
+            builder.Add(null);
+        }
+        return builder.DrainToImmutable();
+    }
+
+    private object SupplyParserStateInfo(object diagnostic, in GrammarTablesHotData hotData, ref ValueStack<int> stateStack)
+    {
+        return diagnostic switch
+        {
+            IParserStateInfoSupplier x => x.WithParserStateInfo(GetExpectedSymbols(in hotData, ref stateStack), stateStack.Peek()),
+            ParserDiagnostic { Message: IParserStateInfoSupplier x, Position: var position } =>
+                new ParserDiagnostic(position, x.WithParserStateInfo(GetExpectedSymbols(in hotData, ref stateStack), stateStack.Peek())),
+            _ => diagnostic
+        };
     }
 
     private RunResult Run(ref ParserInputReader<TChar> input, ref ValueStack<int> stateStack, ref ValueStack<object?> semanticValueStack, out object? result)
@@ -82,11 +192,12 @@ internal readonly struct DefaultParserImplementation<TChar>
             }
             else if (!token.IsSuccess)
             {
-                result = ParserUtilities.SupplyParserStateInfo(token.Data, _lrStateMachine[currentState]);
+                result = SupplyParserStateInfo(token.Data, in hotData, ref stateStack);
                 return RunResult.Failure;
             }
             else
             {
+                bool performLac = Options.LookaheadCorrection == LookaheadCorrectionOption.Always;
             RetryToken:
                 LrAction action = _lrStateMachine.GetAction(currentState, token.Symbol);
                 if (action.IsShift)
@@ -96,8 +207,10 @@ internal readonly struct DefaultParserImplementation<TChar>
                     semanticValueStack.Push(token.Data);
                     continue;
                 }
-                if (action.IsReduce)
+                if (action.IsReduce && (!performLac || TrySpeculativeReduce(in hotData, ref stateStack, token.Symbol, action.ReduceProduction)))
                 {
+                    // Perform LAC only once per token.
+                    performLac = false;
                     try
                     {
                         currentState = Reduce(ref input, in hotData, ref stateStack, ref semanticValueStack, action.ReduceProduction);
@@ -117,7 +230,7 @@ internal readonly struct DefaultParserImplementation<TChar>
             }
             TextPosition errorPos = foundToken ? token.Position : input.State.CurrentPosition;
             string? actualTokenName = foundToken ? Grammar.GetTokenSymbol(token.Symbol).Name : null;
-            ImmutableArray<string?> expectedTokens = ParserUtilities.GetExpectedSymbols(_lrStateMachine[currentState]);
+            ImmutableArray<string?> expectedTokens = GetExpectedSymbols(in hotData, ref stateStack);
             result = new ParserDiagnostic(errorPos, new SyntaxError(actualTokenName, expectedTokens, currentState));
             return RunResult.Failure;
         }

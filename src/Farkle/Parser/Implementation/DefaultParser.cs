@@ -42,9 +42,14 @@ internal sealed class DefaultParser<T> : CharParser<T>
 
     internal override Tokenizer<char> GetTokenizer() => _implementation.Tokenizer;
 
+    internal override ParserOptions GetOptions() => _implementation.Options;
+
     private protected override DefaultParser<TNew> WithSemanticProviderCore<TNew>(ISemanticProvider<char, TNew> semanticProvider) =>
         new(_implementation with { SemanticProvider = semanticProvider });
 
     private protected override DefaultParser<T> WithTokenizerCore(Tokenizer<char> tokenizer) =>
         new(_implementation with { Tokenizer = ChainedTokenizer<char>.Create(tokenizer) });
+
+    internal override DefaultParser<T> WithOptionsCore(ParserOptions options) =>
+        _implementation.Options.Equals(options) ? this : new(_implementation with { Options = options });
 }

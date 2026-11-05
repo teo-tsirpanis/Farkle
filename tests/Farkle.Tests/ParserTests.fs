@@ -131,6 +131,20 @@ let tests = testList "Parser tests" [
             |> formatJson
         Expect.equal farkleCSharp jsonAsString "The JSON generated from the Farkle C# parser is different"
     )
+    
+    testProperty "The JSON parser works well with lookahead correction" (fun json ->
+        let formatJson (json: JsonNode) = match json with null -> "null" | _ -> json.ToJsonString()
+
+        let jsonAsString = formatJson json
+        let farkleFSharp =
+            JSON.parser
+            |> _.WithLookaheadCorrection(Parser.LookaheadCorrectionOption.Always)
+            |> _.Parse(jsonAsString)
+            |> ParserResult.toResult
+            |> Flip.Expect.wantOk "Farkle's parser failed"
+            |> formatJson
+        Expect.equal farkleFSharp jsonAsString "The JSON is different"
+    )
 
     testProperty "The calculator works well" (fun expr ->
         let exprAsString = SimpleMaths.renderExpression expr

@@ -26,6 +26,8 @@ internal sealed class FailingCharParser<T> : CharParser<T>
 
     internal override Tokenizer<char> GetTokenizer() => throw new NotSupportedException();
 
+    internal override ParserOptions GetOptions() => new();
+
     private protected override CharParser<TNew> WithSemanticProviderCore<TNew>(ISemanticProvider<char, TNew> semanticProvider) =>
         this as CharParser<TNew> ?? new FailingCharParser<TNew>(_error, _grammar);
 
@@ -35,6 +37,8 @@ internal sealed class FailingCharParser<T> : CharParser<T>
     private protected override CharParser<T> WithTokenizerCore(Tokenizer<char> tokenizer) => this;
 
     private protected override CharParser<T> WithTokenizerChainCore(ReadOnlySpan<ChainedTokenizerComponent<char>> components) => this;
+
+    internal override CharParser<T> WithOptionsCore(ParserOptions options) => this;
 
     private sealed class FailingGrammarProvider(object error) : IGrammarProvider
     {

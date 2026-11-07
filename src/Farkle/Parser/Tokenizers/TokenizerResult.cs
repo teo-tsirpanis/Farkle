@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 using Farkle.Grammars;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 
 namespace Farkle.Parser.Tokenizers;
@@ -15,6 +16,7 @@ namespace Farkle.Parser.Tokenizers;
 /// <see cref="Tokenizer{TChar}.TryGetNextToken"/> method will return
 /// <see langword="false"/>.
 /// </remarks>
+[DebuggerDisplay("{GetDebuggerDisplay(),nq}")]
 public readonly struct TokenizerResult
 {
     /// <summary>
@@ -43,6 +45,8 @@ public readonly struct TokenizerResult
     /// Contains the position of the first character of the token.
     /// </summary>
     public TextPosition Position { get; private init; }
+
+    private string GetDebuggerDisplay() => IsSuccess ? $"Symbol = {Symbol}; Data = {Data}" : $"Error = {Data}";
 
     /// <summary>
     /// Creates a <see cref="TokenizerResult"/> signifying success.

@@ -1,11 +1,14 @@
 // Copyright © Theodore Tsirpanis and Contributors.
 // SPDX-License-Identifier: MIT
 
+using System.Diagnostics;
+
 namespace Farkle.Grammars.StateMachines;
 
 /// <summary>
 /// Specifies what an LR parser will do if it encounters a terminal.
 /// </summary>
+[DebuggerDisplay("{ToString(null),nq}")]
 public readonly struct LrAction : IEquatable<LrAction>
 {
     internal int Value { get; }
@@ -111,7 +114,7 @@ public readonly struct LrAction : IEquatable<LrAction>
     /// <inheritdoc/>
     public override int GetHashCode() => Value;
 
-    internal string ToString(Grammar grammar)
+    internal string ToString(Grammar? grammar)
     {
         if (IsShift)
         {
@@ -120,7 +123,7 @@ public readonly struct LrAction : IEquatable<LrAction>
 
         if (IsReduce)
         {
-            return $"Reduce production {grammar.GetProduction(ReduceProduction)}";
+            return "Reduce production " + (grammar is not null ? grammar.GetProduction(ReduceProduction) : ReduceProduction);
         }
 
         return "Error";

@@ -1,11 +1,14 @@
 // Copyright © Theodore Tsirpanis and Contributors.
 // SPDX-License-Identifier: MIT
 
+using System.Diagnostics;
+
 namespace Farkle.Grammars.StateMachines;
 
 /// <summary>
 /// Specifies what an LR parser will do if it encounters the end of input.
 /// </summary>
+[DebuggerDisplay("{ToString(null),nq}")]
 public readonly struct LrEndOfFileAction : IEquatable<LrEndOfFileAction>
 {
     internal uint Value { get; }
@@ -84,11 +87,11 @@ public readonly struct LrEndOfFileAction : IEquatable<LrEndOfFileAction>
     /// <inheritdoc/>
     public override int GetHashCode() => (int)Value;
 
-    internal string ToString(Grammar grammar)
+    internal string ToString(Grammar? grammar)
     {
         if (IsReduce)
         {
-            return $"Reduce production {grammar.GetProduction(ReduceProduction)}";
+            return "Reduce production " + (grammar is not null ? grammar.GetProduction(ReduceProduction) : ReduceProduction);
         }
 
         if (IsAccept)

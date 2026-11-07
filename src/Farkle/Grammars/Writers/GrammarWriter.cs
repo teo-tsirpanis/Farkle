@@ -135,6 +135,13 @@ internal sealed class GrammarWriter : IGrammarSyntaxProvider
         lr.WriteData(buffer, _tablesWriter.TokenSymbolRowCount, _tablesWriter.TerminalCount, _tablesWriter.ProductionCount, _tablesWriter.NonterminalCount);
         ulong kind = lr.HasConflicts ? GrammarConstants.Glr1Kind : GrammarConstants.Lr1Kind;
         AddStateMachine(kind, GetOrAddBlob(buffer));
+
+        if (lr.HasDefaultReductions())
+        {
+            buffer.Clear();
+            lr.WriteDefaultReductions(buffer, _tablesWriter.ProductionCount);
+            AddStateMachine(GrammarConstants.Lr1DefaultReductionsKind, GetOrAddBlob(buffer));
+        }
     }
 
     public void AddStateMachine(ulong kind, BlobHandle data)
@@ -150,6 +157,15 @@ internal sealed class GrammarWriter : IGrammarSyntaxProvider
         _tablesWriter.AddSpecialName(name, symbol);
     }
 
+    private (ushort VersionMajor, ushort VersionMinor) GetVersion()
+    {
+        if (_tablesWriter.HasStateMachine(GrammarConstants.Lr1DefaultReductionsKind))
+        {
+            return (GrammarConstants.VersionMajor, 1);
+        }
+        return (GrammarConstants.VersionMajor, 0);
+    }
+
     public void WriteTo(IBufferWriter<byte> writer)
     {
         using PooledSegmentBufferWriter<byte> tablesBuffer = new();
@@ -161,8 +177,9 @@ internal sealed class GrammarWriter : IGrammarSyntaxProvider
         }
 
         writer.Write(GrammarConstants.HeaderMagic);
-        writer.Write(GrammarConstants.VersionMajor);
-        writer.Write(GrammarConstants.VersionMinor);
+        var (versionMajor, versionMinor) = GetVersion();
+        writer.Write(versionMajor);
+        writer.Write(versionMinor);
         writer.Write((uint)StreamCount);
 
         int dataOffset =

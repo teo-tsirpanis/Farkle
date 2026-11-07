@@ -141,6 +141,7 @@ let recreateSyntaxFromGrammar (g: Grammar) =
         nonterminals[g.GrammarInfo.StartSymbol.Handle.Value]
             .AutoWhitespace(false)
             .WithGrammarName(g.GrammarInfo.Name)
+            .WithDefaultReductions(DefaultReductionsOption.None)
             .BuildSyntaxCheck()
     if parser.IsFailing then
         failtestf "Failed to build: %O" (parser.Parse "")

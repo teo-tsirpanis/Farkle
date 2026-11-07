@@ -15,6 +15,7 @@ internal sealed class LrWriter
 
     private readonly List<(uint TerminalIndex, int Action)> _actions = new();
     private readonly int[] _firstActions;
+    private readonly uint[] _defaultReductions;
     private uint _maxTerminal, _maxProduction;
 
     private readonly int[] _firstEofActions;
@@ -28,6 +29,8 @@ internal sealed class LrWriter
 
     public bool HasConflicts { get; private set; }
 
+    public bool HasDefaultReductions() => _defaultReductions.ContainsAnyExcept(0u);
+
     public LrWriter(int stateCount)
     {
         if (stateCount <= 0)
@@ -38,6 +41,7 @@ internal sealed class LrWriter
         StateCount = stateCount;
 
         _firstActions = new int[stateCount];
+        _defaultReductions = new uint[stateCount];
         _firstEofActions = new int[stateCount];
         _firstGotos = new int[stateCount];
     }
@@ -60,6 +64,12 @@ internal sealed class LrWriter
         ValidateState(state);
 
         AddAction(terminal, LrAction.CreateShift(state));
+    }
+
+    public void AddError(TokenSymbolHandle terminal)
+    {
+        EnsureNotFinished();
+        AddAction(terminal, LrAction.Error);
     }
 
     private void AddAction(TokenSymbolHandle terminal, LrAction action)
@@ -129,7 +139,7 @@ internal sealed class LrWriter
         }
     }
 
-    public void FinishState()
+    public void FinishState(ProductionHandle defaultReduction = default)
     {
         EnsureNotFinished();
         HasConflicts |= SortAndCheckForConflicts(_firstActions, _actions);
@@ -139,6 +149,9 @@ internal sealed class LrWriter
         {
             ThrowHelpers.ThrowInvalidOperationException("Conflicts on GOTO transitions are not allowed.");
         }
+        _maxProduction = Math.Max(_maxProduction, defaultReduction.TableIndex);
+        _defaultReductions[_currentState] = defaultReduction.TableIndex;
+        CleanupDefaultReductions();
 
         _currentState++;
         if (_currentState < StateCount)
@@ -167,6 +180,43 @@ internal sealed class LrWriter
                 }
             }
             return false;
+        }
+    }
+
+    private void CleanupDefaultReductions()
+    {
+        int defaultReductionAction = _defaultReductions[_currentState] switch
+        {
+            0 => LrAction.Error.Value,
+            var x => LrAction.CreateReduce(new(x)).Value,
+        };
+        bool allActionsHaveConflicts = true;
+        int firstAction = _firstActions[_currentState];
+        if (firstAction == _actions.Count)
+        {
+            return;
+        }
+        int i = firstAction;
+        while (i < _actions.Count)
+        {
+            uint key = _actions[i].TerminalIndex;
+            int actionCount = 1;
+            while (i + actionCount < _actions.Count && _actions[i + actionCount].TerminalIndex == key)
+            {
+                actionCount++;
+            }
+            allActionsHaveConflicts &= actionCount > 1;
+            if (actionCount == 1 && _actions[i].Action == defaultReductionAction)
+            {
+                _actions.RemoveAt(i);
+                actionCount--;
+            }
+            i += actionCount;
+        }
+        if (allActionsHaveConflicts)
+        {
+            // If all actions have conflicts, the default reduction is unused and we can remove it.
+            _defaultReductions[_currentState] = 0;
         }
     }
 
@@ -256,6 +306,21 @@ internal sealed class LrWriter
         foreach ((_, int state) in _gotos)
         {
             writer.WriteVariableSize((uint)state, stateIndexSize);
+        }
+    }
+
+    public void WriteDefaultReductions(IBufferWriter<byte> writer, int productionCount)
+    {
+        EnsureFinished();
+        if (!HasDefaultReductions())
+        {
+            ThrowHelpers.ThrowInvalidOperationException("State machine has no default reductions.");
+        }
+
+        byte defaultReductionSize = GetCompressedIndexSize(productionCount);
+        foreach (uint defaultReduction in _defaultReductions)
+        {
+            writer.WriteVariableSize(defaultReduction, defaultReductionSize);
         }
     }
 }

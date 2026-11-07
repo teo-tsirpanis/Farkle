@@ -140,8 +140,9 @@ internal struct LrConflictResolver(OperatorInfoProvider? infoProvider)
     /// Returns whether an <see cref="LrConflictContribution"/> is contained in the dominant set.
     /// The contribution must have been previously passed to <see cref="Add(Symbol, LrConflictContribution, out int)"/>.
     /// </summary>
-    public readonly bool ContainsInDominantSet(LrConflictContribution contribution, int precedence)
+    public readonly bool ContainsInDominantSet(LrConflictContribution contribution, int precedence, out bool isNonAssociative)
     {
+        isNonAssociative = false;
         if (precedence < 0)
         {
             return true;
@@ -160,7 +161,8 @@ internal struct LrConflictResolver(OperatorInfoProvider? infoProvider)
                 case AssociativityType.RightAssociative:
                     return !contribution.IsReduce(out _);
                 case AssociativityType.NonAssociative:
-                    return false;
+                    isNonAssociative = true;
+                    return true;
             }
         }
         return true;

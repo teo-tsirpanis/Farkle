@@ -8,6 +8,7 @@ using System.Runtime.InteropServices;
 using Farkle.Builder.OperatorPrecedence;
 using Farkle.Collections;
 using Farkle.Diagnostics.Builder;
+using Farkle.Grammars;
 using Farkle.Grammars.Writers;
 using static Farkle.Builder.Lr.AugmentedSyntaxProvider;
 
@@ -40,16 +41,17 @@ internal readonly partial struct LrBuild
     /// Builds an LR(1) state machine that can parse the syntax of a grammar.
     /// </summary>
     /// <param name="syntax">The syntax of the grammar.</param>
-    /// <param name="algorithm">The algorithm to use (LALR or IELR).</param>
+    /// <param name="options">The global options for the grammar building process.</param>
     /// <param name="operatorInfoProvider">The operator info provider to use. Optional.</param>
     /// <param name="log">Used to log events in the building process.</param>
     /// <param name="cancellationToken">Used to cancel the building process.</param>
-    public static LrWriter Build(IGrammarSyntaxProvider syntax, ParserGenerationAlgorithm algorithm,
+    public static LrWriter Build(IGrammarSyntaxProvider syntax, in GrammarGlobalOptions options,
         OperatorInfoProvider? operatorInfoProvider = null, BuilderLogger log = default, CancellationToken cancellationToken = default) =>
-        new LrBuild(syntax, operatorInfoProvider, log, cancellationToken).Build(algorithm);
+        new LrBuild(syntax, operatorInfoProvider, log, cancellationToken).Build(in options);
 
-    private LrWriter Build(ParserGenerationAlgorithm algorithm)
+    private LrWriter Build(in GrammarGlobalOptions options)
     {
+        var algorithm = options.ParserGenerationAlgorithm;
         var lr0StateMachine = ComputeLr0StateMachine();
         var nullableNonterminals = ComputeNullableNonterminals();
         var productionNullableStarts = ComputeProductionNullableStarts(nullableNonterminals);
@@ -67,7 +69,7 @@ internal readonly partial struct LrBuild
         if (algorithm == ParserGenerationAlgorithm.Lalr1
             || (ComputeConflicts(lr0StateMachine, reductionLookaheads) is var conflicts && conflicts is []))
         {
-            return WriteStateMachine(lr0StateMachine, reductionLookaheads);
+            return WriteStateMachine(lr0StateMachine, reductionLookaheads, options.DefaultReductions);
         }
         else
         {
@@ -88,12 +90,12 @@ internal readonly partial struct LrBuild
                 PropagateGotoFollows(newGotoFollowDependencies, GotoFollowDependencyKinds.Successor | GotoFollowDependencyKinds.Internal, newGotoFollows);
                 PropagateGotoFollows(newGotoFollowDependencies, GotoFollowDependencyKinds.Internal | GotoFollowDependencyKinds.Predecessor, newGotoFollows);
                 var newReductionLookaheads = ComputeReductionLookaheads(newLr0StateMachine, newGotoFollows);
-                return WriteStateMachine(newLr0StateMachine, newReductionLookaheads);
+                return WriteStateMachine(newLr0StateMachine, newReductionLookaheads, options.DefaultReductions);
             }
             else
             {
                 // No need to recompute reduction lookaheads if we didn't split any states.
-                return WriteStateMachine(lr0StateMachine, reductionLookaheads);
+                return WriteStateMachine(lr0StateMachine, reductionLookaheads, options.DefaultReductions);
             }
         }
 
@@ -108,7 +110,7 @@ internal readonly partial struct LrBuild
         }
     }
 
-    private LrWriter WriteStateMachine(Lr0StateMachine lr0StateMachine, GroupedIndexedList<ReductionLookahead> reductionLookaheads)
+    private LrWriter WriteStateMachine(Lr0StateMachine lr0StateMachine, GroupedIndexedList<ReductionLookahead> reductionLookaheads, DefaultReductionsOption defaultReductions)
     {
         var writer = new LrWriter(lr0StateMachine.States.Length);
         if (OperatorInfoProvider is null)
@@ -134,7 +136,7 @@ internal readonly partial struct LrBuild
                 // A state with no reduce actions cannot have conflicts.
                 if (reductions.IsEmpty)
                 {
-                    Write_NoConflicts(in lr0StateMachine.States.ItemRef(i), reductions);
+                    Write_NoConflicts(in state, reductions);
                     continue;
                 }
 
@@ -165,7 +167,15 @@ internal readonly partial struct LrBuild
                     {
                         if (symbol.IsTerminal)
                         {
-                            if (ContainsInDominantSet(symbol, LrConflictContribution.CreateShift(value), precedences[j++]))
+                            if (!ContainsInDominantSet(symbol, LrConflictContribution.CreateShift(value), precedences[j++], out bool isNonAssociative))
+                            {
+                                continue;
+                            }
+                            if (isNonAssociative)
+                            {
+                                writer.AddError(TranslateTerminal(symbol));
+                            }
+                            else
                             {
                                 writer.AddShift(TranslateTerminal(symbol), value);
                             }
@@ -179,14 +189,15 @@ internal readonly partial struct LrBuild
                     {
                         foreach (var terminal in reduction.Lookahead)
                         {
-                            if (ContainsInDominantSet(terminal, LrConflictContribution.CreateReduce(reduction.Production), precedences[j++]))
+                            if (ContainsInDominantSet(terminal, LrConflictContribution.CreateReduce(reduction.Production), precedences[j++], out bool isNonAssociative) && !isNonAssociative)
                             {
                                 AddReduce(writer, terminal, reduction.Production);
                             }
                         }
                     }
                     Debug.Assert(j == precedences.Count);
-                    writer.FinishState();
+                    var defaultReduction = GetDefaultReduction(reductions, defaultReductions);
+                    writer.FinishState(defaultReduction);
                 }
 
                 conflictResolvers.Clear();
@@ -208,15 +219,16 @@ internal readonly partial struct LrBuild
                     }
                 }
 
-                bool ContainsInDominantSet(Symbol symbol, LrConflictContribution contribution, int precedence)
+                bool ContainsInDominantSet(Symbol symbol, LrConflictContribution contribution, int precedence, out bool isNonAssociative)
                 {
                     if (symbolsWithIncompletePrecedenceInfo[symbol])
                     {
+                        isNonAssociative = false;
                         return true;
                     }
                     ref var resolver = ref CollectionsMarshal.GetValueRefOrNullRef(conflictResolvers, symbol);
                     Debug.Assert(!Unsafe.IsNullRef(ref resolver));
-                    return resolver.ContainsInDominantSet(contribution, precedence);
+                    return resolver.ContainsInDominantSet(contribution, precedence, out isNonAssociative);
                 }
             }
         }
@@ -242,7 +254,8 @@ internal readonly partial struct LrBuild
                     AddReduce(writer, terminal, reductionLookahead.Production);
                 }
             }
-            writer.FinishState();
+            var defaultReduction = GetDefaultReduction(reductionLookaheads, defaultReductions);
+            writer.FinishState(defaultReduction);
         }
     }
 
@@ -260,5 +273,41 @@ internal readonly partial struct LrBuild
             return;
         }
         writer.AddReduce(TranslateTerminal(terminal), TranslateProduction(production));
+    }
+
+    private static ProductionHandle GetDefaultReduction(ReadOnlySpan<ReductionLookahead> reductionLookaheads, DefaultReductionsOption option)
+    {
+        if (option == DefaultReductionsOption.None)
+        {
+            return default;
+        }
+        int maxCount = 0;
+        ProductionHandle mostFrequent = default;
+        foreach (ref readonly var reductionLookahead in reductionLookaheads)
+        {
+            if (reductionLookahead.Production.Index == StartProductionIndex)
+            {
+                // Skip accepts.
+                continue;
+            }
+            if (option == DefaultReductionsOption.ConsistentStates && maxCount > 0)
+            {
+                // This is not the first reduction we saw, so the state does not have a consistent default reduction.
+                return default;
+            }
+            var count = reductionLookahead.Lookahead.PopCount();
+            Debug.Assert(count > 0);
+            if (count == 1 && reductionLookahead.Lookahead.HasEndSymbol)
+            {
+                // Skip reductions that have only EOF as lookahead, since they will not be used as default reductions.
+                continue;
+            }
+            if (count > maxCount)
+            {
+                maxCount = count;
+                mostFrequent = TranslateProduction(reductionLookahead.Production);
+            }
+        }
+        return mostFrequent;
     }
 }

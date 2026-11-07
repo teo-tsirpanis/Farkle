@@ -343,6 +343,8 @@ internal struct GrammarTablesWriter
         return _productionMembers[index].Member;
     }
 
+    public readonly bool HasStateMachine(ulong kind) => _presentStateMachines?.Contains(kind) ?? false;
+
     public readonly void WriteTo(IBufferWriter<byte> writer, GrammarHeapSizes heapSizes)
     {
         ValidateRequiredRowCount(_groupNestings, _requiredGroupNestings, "Not enough group nestings have been added.");

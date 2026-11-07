@@ -146,7 +146,7 @@ internal class LrConflictResolverTests
             }
             for (int i = 0; i < precedences.Count; i++)
             {
-                if (conflictResolver.ContainsInDominantSet(contributions[i], precedences[i]))
+                if (conflictResolver.ContainsInDominantSet(contributions[i], precedences[i], out bool emitErrorAction) && !emitErrorAction)
                 {
                     result.Add(contributions[i]);
                 }

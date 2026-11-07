@@ -247,7 +247,9 @@ public static class GrammarBuilderExtensions
             ThrowHelpers.ThrowArgumentOutOfRangeException(nameof(value));
         }
 
-        return builder.WithOptions(builder.GetOptions() with { ParserGenerationAlgorithm = value });
+        return value == builder.GetOptions().ParserGenerationAlgorithm
+            ? builder
+            : builder.WithOptions(builder.GetOptions() with { ParserGenerationAlgorithm = value });
     }
 
     /// <inheritdoc cref="WithParserGenerationAlgorithm"/>
@@ -258,7 +260,49 @@ public static class GrammarBuilderExtensions
             ThrowHelpers.ThrowArgumentOutOfRangeException(nameof(value));
         }
 
-        return builder.WithOptions(builder.GetOptions() with { ParserGenerationAlgorithm = value });
+        return value == builder.GetOptions().ParserGenerationAlgorithm
+            ? builder
+            : builder.WithOptions(builder.GetOptions() with { ParserGenerationAlgorithm = value });
+    }
+
+    /// <summary>
+    /// Changes when the builder will emit default reductions in the grammar's parsing tables.
+    /// </summary>
+    /// <param name="builder">The grammar builder.</param>
+    /// <param name="value">The <see cref="DefaultReductionsOption"/> to use.</param>
+    /// <remarks>
+    /// <para>
+    /// Its default value is <see cref="DefaultReductionsOption.All"/>.
+    /// </para>
+    /// <para>
+    /// Default reductions can significantly reduce the size of the parsing tables, at the
+    /// cost of behavior changes when parsing. These behavior changes are mitigated with
+    /// the use of lookahead correction in the parser.
+    /// </para>
+    /// </remarks>
+    public static IGrammarBuilder WithDefaultReductions(this IGrammarBuilder builder, DefaultReductionsOption value)
+    {
+        if (!Enum.IsDefined(value))
+        {
+            ThrowHelpers.ThrowArgumentOutOfRangeException(nameof(value));
+        }
+
+        return value == builder.GetOptions().DefaultReductions
+            ? builder
+            : builder.WithOptions(builder.GetOptions() with { DefaultReductions = value });
+    }
+
+    /// <inheritdoc cref="WithDefaultReductions"/>
+    public static IGrammarBuilder<T> WithDefaultReductions<T>(this IGrammarBuilder<T> builder, DefaultReductionsOption value)
+    {
+        if (!Enum.IsDefined(value))
+        {
+            ThrowHelpers.ThrowArgumentOutOfRangeException(nameof(value));
+        }
+
+        return value == builder.GetOptions().DefaultReductions
+            ? builder
+            : builder.WithOptions(builder.GetOptions() with { DefaultReductions = value });
     }
 
     /// <summary>

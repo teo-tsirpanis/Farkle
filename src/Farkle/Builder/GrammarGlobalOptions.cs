@@ -32,6 +32,8 @@ internal readonly struct GrammarGlobalOptions
 
     public ParserGenerationAlgorithm ParserGenerationAlgorithm { get; init; } = ParserGenerationAlgorithm.Ielr1;
 
+    public DefaultReductionsOption DefaultReductions { get; init; } = DefaultReductionsOption.All;
+
     public GrammarGlobalOptions() { }
 
     public static readonly GrammarGlobalOptions Default = new();

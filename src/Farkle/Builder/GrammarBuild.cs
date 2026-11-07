@@ -335,7 +335,7 @@ internal static class GrammarBuild
             var operatorInfoProvider = operatorScope is not null
                 ? new OperatorInfoProvider(operatorScope, operatorSymbolMap!, grammarDefinition.SymbolIdentityObjectComparer, log)
                 : null;
-            writer.AddStateMachine(LrBuild.Build(writer, globalOptions.ParserGenerationAlgorithm, operatorInfoProvider, log, options.CancellationToken));
+            writer.AddStateMachine(LrBuild.Build(writer, in globalOptions, operatorInfoProvider, log, options.CancellationToken));
         }
 
         // Farkle's builder can be trusted to not produce malformed grammars, so we can skip content validation.

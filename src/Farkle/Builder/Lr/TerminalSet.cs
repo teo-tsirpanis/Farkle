@@ -58,6 +58,18 @@ internal readonly struct TerminalSet : IEnumerable<Symbol>, IEquatable<TerminalS
         }
     }
 
+    public bool HasEndSymbol => _value[EndSymbolIndex];
+
+    public int PopCount()
+    {
+        int count = 0;
+        foreach (var x in _value.AsSpan())
+        {
+            count += (int)ulong.PopCount(x);
+        }
+        return count;
+    }
+
     public bool Set(Symbol symbol, bool value)
     {
         Debug.Assert(symbol.IsTerminal);

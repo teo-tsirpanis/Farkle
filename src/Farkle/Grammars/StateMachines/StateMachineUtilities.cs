@@ -139,7 +139,7 @@ internal static class StateMachineUtilities
         return new DfaWithConflicts<TChar>(grammar, stateCount, edgeCount, acceptCount, in dfa);
     }
 
-    private static LrWithoutConflicts? CreateLr(Grammar grammar, ReadOnlySpan<byte> grammarFile, GrammarFileSection lr)
+    private static LrWithoutConflicts? CreateLr(Grammar grammar, ReadOnlySpan<byte> grammarFile, GrammarFileSection lr, GrammarFileSection lrDefaultReductions)
     {
         if (lr.Length < sizeof(uint) * 3)
         {
@@ -155,10 +155,10 @@ internal static class StateMachineUtilities
             return null;
         }
 
-        return new LrWithoutConflicts(grammar, stateCount, actionCount, gotoCount, in grammar.GrammarTables, lr);
+        return new LrWithoutConflicts(grammar, stateCount, actionCount, gotoCount, in grammar.GrammarTables, lr, lrDefaultReductions);
     }
 
-    private static LrWithConflicts? CreateLrWithConflicts(Grammar grammar, ReadOnlySpan<byte> grammarFile, GrammarFileSection lr)
+    private static LrWithConflicts? CreateLrWithConflicts(Grammar grammar, ReadOnlySpan<byte> grammarFile, GrammarFileSection lr, GrammarFileSection lrDefaultReductions)
     {
         if (lr.Length < sizeof(uint) * 4)
         {
@@ -175,7 +175,7 @@ internal static class StateMachineUtilities
             return null;
         }
 
-        return new LrWithConflicts(grammar, stateCount, actionCount, gotoCount, eofActionCount, in grammar.GrammarTables, lr);
+        return new LrWithConflicts(grammar, stateCount, actionCount, gotoCount, eofActionCount, in grammar.GrammarTables, lr, lrDefaultReductions);
     }
 
     public static (Dfa<char>? DfaOnChar, LrStateMachine? LrStateMachine) GetGrammarStateMachines(Grammar grammar, ReadOnlySpan<byte> grammarFile, in GrammarStateMachines stateMachines)
@@ -196,12 +196,12 @@ internal static class StateMachineUtilities
 
         if (!stateMachines.Lr1.IsEmpty)
         {
-            lr = CreateLr(grammar, grammarFile, stateMachines.Lr1);
+            lr = CreateLr(grammar, grammarFile, stateMachines.Lr1, stateMachines.Lr1DefaultReductions);
         }
 
         if (lr is null && !stateMachines.Glr1.IsEmpty)
         {
-            lr = CreateLrWithConflicts(grammar, grammarFile, stateMachines.Glr1);
+            lr = CreateLrWithConflicts(grammar, grammarFile, stateMachines.Glr1, stateMachines.Lr1DefaultReductions);
         }
 
         return (dfaOnChar, lr);

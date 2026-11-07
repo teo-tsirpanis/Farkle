@@ -7,12 +7,12 @@ internal readonly struct GrammarStateMachines
 {
     public readonly Dfa DfaOnChar;
 
-    public readonly GrammarFileSection Lr1, Glr1;
+    public readonly GrammarFileSection Lr1, Glr1, Lr1DefaultReductions;
 
-    public GrammarStateMachines(ReadOnlySpan<byte> grammarFile, in BlobHeap blobHeap, in GrammarTables tables, out bool hasUnknownStateMachines) : this()
+    public GrammarStateMachines(ReadOnlySpan<byte> grammarFile, in BlobHeap blobHeap, in GrammarHeader header, in GrammarTables tables, out bool hasUnknownStateMachines) : this()
     {
         bool seenDfaOnChar = false, seenDfaOnCharWithConflicts = false, seenDfaOnCharDefaultTransitions = false, seenDfaOnCharGroupStartStates = false;
-        bool seenLr1 = false, seenGlr1 = false;
+        bool seenLr1 = false, seenGlr1 = false, seenLr1DefaultReductions = false;
 
         hasUnknownStateMachines = false;
         for (uint i = 1; i <= (uint)tables.StateMachineRowCount; i++)
@@ -44,6 +44,13 @@ internal readonly struct GrammarStateMachines
                     break;
                 case GrammarConstants.Glr1Kind:
                     AssignStateMachine(grammarFile, in blobHeap, kind, data, ref Glr1, ref seenGlr1);
+                    break;
+                case GrammarConstants.Lr1DefaultReductionsKind:
+                    if (!header.IsVersionOrGreater(7, 1))
+                    {
+                        ThrowHelpers.ThrowInvalidDataException("LR(1) default reductions are not supported in grammar file format versions prior to 7.1.");
+                    }
+                    AssignStateMachine(grammarFile, in blobHeap, kind, data, ref Lr1DefaultReductions, ref seenLr1DefaultReductions);
                     break;
                 default:
                     // As with streams, we don't detect duplicate state machines.

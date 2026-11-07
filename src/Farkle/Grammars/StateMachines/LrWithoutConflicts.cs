@@ -1,6 +1,7 @@
 // Copyright © Theodore Tsirpanis and Contributors.
 // SPDX-License-Identifier: MIT
 
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 
 namespace Farkle.Grammars.StateMachines;
@@ -10,8 +11,8 @@ internal sealed class LrWithoutConflicts : LrImplementationBase
     private Dictionary<TokenSymbolHandle, LrAction>[]? _actionLookup;
 
     [SetsRequiredMembers]
-    public LrWithoutConflicts(Grammar grammar, int stateCount, int actionCount, int gotoCount, in GrammarTables grammarTables, GrammarFileSection lr)
-        : base(grammar, stateCount, actionCount, gotoCount, in grammarTables, false)
+    public LrWithoutConflicts(Grammar grammar, int stateCount, int actionCount, int gotoCount, in GrammarTables grammarTables, GrammarFileSection lr, GrammarFileSection lrDefaultReductions)
+        : base(grammar, stateCount, actionCount, gotoCount, in grammarTables, lrDefaultReductions, false)
     {
         int expectedSize =
             sizeof(uint) * 3
@@ -58,8 +59,20 @@ internal sealed class LrWithoutConflicts : LrImplementationBase
         _actionLookup = actionLookup;
     }
 
-    internal override LrAction GetAction(int state, TokenSymbolHandle terminal) =>
-        _actionLookup![state].TryGetValue(terminal, out LrAction action) ? action : LrAction.Error;
+    internal override LrAction GetAction(int state, TokenSymbolHandle terminal)
+    {
+        Debug.Assert(_actionLookup is not null, "PrepareForParsing has not been called.");
+
+        if (_actionLookup[state].TryGetValue(terminal, out LrAction action))
+        {
+            return action;
+        }
+        if (DefaultReductionBase != 0 && GetDefaultReductionUnsafe(state) is { HasValue: true } reduction)
+        {
+            return LrAction.CreateReduce(reduction);
+        }
+        return LrAction.Error;
+    }
 
     internal override LrEndOfFileAction GetEndOfFileAction(int state)
     {

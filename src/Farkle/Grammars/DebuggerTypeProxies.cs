@@ -24,7 +24,9 @@ internal sealed class LrStateProxy
 
     public LrStateProxy(LrState state)
     {
-        _actions = new NameValuePair[state.Actions.Count + state.EndOfFileActions.Count + state.Gotos.Count];
+        var defaultReduction = state.DefaultReduction;
+
+        _actions = new NameValuePair[state.Actions.Count + state.EndOfFileActions.Count + (defaultReduction.HasValue ? 1 : 0) + state.Gotos.Count];
 
         Grammar grammar = state.Grammar;
         int i = 0;
@@ -39,6 +41,11 @@ internal sealed class LrStateProxy
         foreach (var @goto in state.Gotos)
         {
             _actions[i++] = new NameValuePair(@goto.Key.ToString(), $"Goto state {@goto.Value}");
+        }
+        if (defaultReduction.HasValue)
+        {
+            string name = i > 0 ? "In all other cases" : "Always";
+            _actions[i++] = new NameValuePair(name, LrAction.CreateReduce(defaultReduction).ToString(grammar));
         }
         Debug.Assert(i == _actions.Length);
     }

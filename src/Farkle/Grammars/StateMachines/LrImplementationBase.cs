@@ -10,7 +10,7 @@ namespace Farkle.Grammars.StateMachines;
 
 internal abstract class LrImplementationBase : LrStateMachine
 {
-    protected readonly byte _stateIndexSize, _actionIndexSize, _gotoIndexSize, _actionSize, _eofActionSize, _tokenSymbolIndexSize, _nonterminalIndexSize;
+    protected readonly byte _stateIndexSize, _actionIndexSize, _gotoIndexSize, _actionSize, _eofActionSize, _tokenSymbolIndexSize, _nonterminalIndexSize, _productionIndexSize;
 
     private Dictionary<NonterminalHandle, int>[]? _gotoLookup;
 
@@ -32,7 +32,9 @@ internal abstract class LrImplementationBase : LrStateMachine
 
     public required int GotoStateBase { get; init; }
 
-    protected LrImplementationBase(Grammar grammar, int stateCount, int actionCount, int gotoCount, in GrammarTables grammarTables, bool hasConflicts) : base(grammar, stateCount, hasConflicts)
+    public int DefaultReductionBase { get; }
+
+    protected LrImplementationBase(Grammar grammar, int stateCount, int actionCount, int gotoCount, in GrammarTables grammarTables, GrammarFileSection lrDefaultReductions, bool hasConflicts) : base(grammar, stateCount, hasConflicts)
     {
         _stateIndexSize = GrammarUtilities.GetCompressedIndexSize(stateCount);
         _actionIndexSize = GrammarUtilities.GetCompressedIndexSize(actionCount);
@@ -41,9 +43,16 @@ internal abstract class LrImplementationBase : LrStateMachine
         _eofActionSize = GrammarUtilities.GetCompressedIndexSize(grammarTables.ProductionRowCount);
         _tokenSymbolIndexSize = GrammarUtilities.GetCompressedIndexSize(grammarTables.TokenSymbolRowCount);
         _nonterminalIndexSize = GrammarUtilities.GetCompressedIndexSize(grammarTables.NonterminalRowCount);
+        _productionIndexSize = GrammarUtilities.GetCompressedIndexSize(grammarTables.ProductionRowCount);
+
+        if (lrDefaultReductions.Length > 0 && lrDefaultReductions.Length != stateCount * _productionIndexSize)
+        {
+            ThrowHelpers.ThrowInvalidLrDataSize();
+        }
 
         ActionCount = actionCount;
         GotoCount = gotoCount;
+        DefaultReductionBase = lrDefaultReductions.Offset;
     }
 
     protected LrAction ReadAction(ReadOnlySpan<byte> grammarFile, int index) =>
@@ -60,6 +69,9 @@ internal abstract class LrImplementationBase : LrStateMachine
 
     protected int ReadGoto(ReadOnlySpan<byte> grammarFile, int index) =>
         (int)ReadUIntVariableSizeFromArray(grammarFile, GotoStateBase, index, _stateIndexSize);
+
+    protected ProductionHandle ReadDefaultReduction(ReadOnlySpan<byte> grammarFile, int state) =>
+        new(ReadUIntVariableSizeFromArray(grammarFile, DefaultReductionBase, state, _productionIndexSize));
 
     protected static uint ReadUIntVariableSizeFromArray(ReadOnlySpan<byte> grammarFile, int @base, int index, byte indexSize) =>
         grammarFile.ReadUIntVariableSize(@base + index * indexSize, indexSize);
@@ -118,6 +130,11 @@ internal abstract class LrImplementationBase : LrStateMachine
         return new(nonterminal, state);
     }
 
+    protected ProductionHandle GetDefaultReductionUnsafe(int state)
+    {
+        return ReadDefaultReduction(Grammar.GrammarFile, state);
+    }
+
     internal sealed override (int Offset, int Count) GetActionBounds(int state)
     {
         ValidateStateIndex(state);
@@ -146,6 +163,16 @@ internal abstract class LrImplementationBase : LrStateMachine
             ThrowHelpers.ThrowArgumentOutOfRangeException(nameof(index));
         }
         return GetGotoAtUnsafe(Grammar.GrammarFile, index);
+    }
+
+    internal sealed override ProductionHandle GetDefaultReduction(int state)
+    {
+        ValidateStateIndex(state);
+        if (DefaultReductionBase == 0)
+        {
+            return default;
+        }
+        return GetDefaultReductionUnsafe(state);
     }
 
     internal override void ValidateContent(ReadOnlySpan<byte> grammarFile, in GrammarTables grammarTables)
@@ -217,6 +244,14 @@ internal abstract class LrImplementationBase : LrStateMachine
                     previousGotoNonterminal = @goto.Key.TableIndex;
                     ValidateStateIndex(@goto.Value);
                 }
+            }
+        }
+
+        if (DefaultReductionBase != 0)
+        {
+            for (int i = 0; i < Count; i++)
+            {
+                grammarTables.ValidateHandle(GetDefaultReduction(i));
             }
         }
 

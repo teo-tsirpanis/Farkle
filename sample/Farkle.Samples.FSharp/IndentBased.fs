@@ -253,3 +253,4 @@ let parser =
     // The chain is comprised of two tokenizers; our IdentCodeTokenizer,
     // and the parser's pre-existing tokenizer, which is Farkle's built-in one.
     |> CharParser.withTokenizerChain [tokenizerFactory IndentCodeTokenizer; defaultTokenizer]
+    |> _.WithLookaheadCorrection(LookaheadCorrectionOption.Always)

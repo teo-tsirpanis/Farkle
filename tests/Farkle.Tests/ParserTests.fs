@@ -138,7 +138,7 @@ let tests = testList "Parser tests" [
         let jsonAsString = formatJson json
         let farkleFSharp =
             JSON.parser
-            |> _.WithLookaheadCorrection(Parser.LookaheadCorrectionOption.Always)
+            |> _.WithLookaheadCorrection(true)
             |> _.Parse(jsonAsString)
             |> ParserResult.toResult
             |> Flip.Expect.wantOk "Farkle's parser failed"

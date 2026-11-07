@@ -118,22 +118,41 @@ internal readonly struct DefaultParserImplementation<TChar>
     {
         var builder = ImmutableArray.CreateBuilder<string?>();
         int state = stateStack.Peek();
-        foreach (var action in _lrStateMachine[state].Actions)
+        if (Options.EnableLookaheadCorrection && _lrStateMachine[state].DefaultReduction.HasValue)
         {
-            if ((action.Key.Attributes & TokenSymbolAttributes.Hidden) != 0)
+            foreach (var terminal in Grammar.Terminals)
             {
-                continue;
+                if ((terminal.Attributes & TokenSymbolAttributes.Hidden) != 0)
+                {
+                    continue;
+                }
+                var action = _lrStateMachine.GetAction(state, terminal.Handle);
+                if (action.IsError)
+                {
+                    continue;
+                }
+                if (action.IsShift)
+                {
+                    builder.Add(terminal.Name);
+                }
+                else if (action.IsReduce && (!Options.EnableLookaheadCorrection || TrySpeculativeReduce(in hotData, ref stateStack, terminal.Handle, action.ReduceProduction)))
+                {
+                    builder.Add(terminal.Name);
+                }
             }
-            if (action.Value.IsError)
+        }
+        else
+        {
+            foreach (var action in _lrStateMachine[state].Actions)
             {
-                continue;
-            }
-            if (action.Value.IsShift)
-            {
-                builder.Add(action.Key.Name);
-            }
-            else if (action.Value.IsReduce && (Options.LookaheadCorrection == LookaheadCorrectionOption.Never || TrySpeculativeReduce(in hotData, ref stateStack, action.Key.Handle, action.Value.ReduceProduction)))
-            {
+                if ((action.Key.Attributes & TokenSymbolAttributes.Hidden) != 0)
+                {
+                    continue;
+                }
+                if (action.Value.IsError)
+                {
+                    continue;
+                }
                 builder.Add(action.Key.Name);
             }
         }
@@ -197,7 +216,7 @@ internal readonly struct DefaultParserImplementation<TChar>
             }
             else
             {
-                bool performLac = Options.LookaheadCorrection == LookaheadCorrectionOption.Always;
+                bool performLac = Options.EnableLookaheadCorrection;
             RetryToken:
                 LrAction action = _lrStateMachine.GetAction(currentState, token.Symbol);
                 if (action.IsShift)

@@ -214,15 +214,30 @@ public abstract class CharParser<T> : IParser<char, T>
     }
 
     /// <summary>
-    /// Changes the lookahead correction setting of the <see cref="CharParser{T}"/>.
+    /// Changes whether the <see cref="CharParser{T}"/> will employ lookahead correction.
     /// </summary>
     /// <param name="value">The setting's new value.</param>
     /// <remarks>
-    /// See the documentation of <see cref="LookaheadCorrectionOption"/> for more information.
+    /// <para>
+    /// Certain features of the builder such as state merging by LALR(1) and IELR(1),
+    /// or the use of default reductions and non-associative operators, can produce grammars
+    /// that exhibit potentially undesirable behavior, such as delayed detection of syntax
+    /// errors or incorrect reporting of expected symbols.
+    /// </para>
+    /// <para>
+    /// Lookahead correction is a mechanism that mitigates these issues. When it is enabled, the
+    /// parser will check that reducing a token will not lead to a syntax error, before actually
+    /// performing the reduction and executing any semantic actions. It is disabled by default.
+    /// </para>
+    /// <para>
+    /// You must enable lookahead correction if your grammar contains default reductions and terminals
+    /// with the <see cref="TokenSymbolAttributes.Noise"/> attribute. Otherwise, it will lead to
+    /// incorrect parsing behavior.
+    /// </para>
     /// </remarks>
-    public CharParser<T> WithLookaheadCorrection(LookaheadCorrectionOption value)
+    public CharParser<T> WithLookaheadCorrection(bool value)
     {
-        return WithOptionsCore(GetOptions() with { LookaheadCorrection = value });
+        return WithOptionsCore(GetOptions() with { EnableLookaheadCorrection = value });
     }
 }
 
@@ -301,7 +316,7 @@ public static class CharParser
         ArgumentNullException.ThrowIfNull(parserFactory);
 
         // DeclaringType can be null in dynamic methods or the rare module-global methods.
-        if (MetadataUpdater.IsSupported && parserFactory.Method.DeclaringType is {} declaringType)
+        if (MetadataUpdater.IsSupported && parserFactory.Method.DeclaringType is { } declaringType)
         {
             return MetadataUpdatableParser.Create(declaringType, parserFactory);
         }

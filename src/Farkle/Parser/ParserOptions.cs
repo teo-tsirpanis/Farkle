@@ -5,13 +5,13 @@ namespace Farkle.Parser;
 
 internal readonly struct ParserOptions : IEquatable<ParserOptions>
 {
-    public LookaheadCorrectionOption LookaheadCorrection { get; init; } = LookaheadCorrectionOption.OnSyntaxErrors;
+    public bool EnableLookaheadCorrection { get; init; } = false;
 
     public ParserOptions() { }
 
-    public bool Equals(ParserOptions other) => LookaheadCorrection == other.LookaheadCorrection;
+    public bool Equals(ParserOptions other) => EnableLookaheadCorrection == other.EnableLookaheadCorrection;
 
     public override bool Equals(object? obj) => obj is ParserOptions other && Equals(other);
 
-    public override int GetHashCode() => LookaheadCorrection.GetHashCode();
+    public override int GetHashCode() => EnableLookaheadCorrection.GetHashCode();
 }

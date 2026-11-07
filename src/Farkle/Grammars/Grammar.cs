@@ -137,7 +137,7 @@ public abstract partial class Grammar : IGrammarProvider
         BlobHeap = new(streams.BlobHeap);
         GrammarTables = new(grammarFile, streams.TableStream, out bool hasUnknownTables);
 
-        GrammarStateMachines stateMachines = new(grammarFile, in BlobHeap, in GrammarTables, out bool hasUnknownStateMachines);
+        GrammarStateMachines stateMachines = new(grammarFile, in BlobHeap, in header, in GrammarTables, out bool hasUnknownStateMachines);
         (DfaOnChar, LrStateMachine) = StateMachineUtilities.GetGrammarStateMachines(this, grammarFile, in stateMachines);
 
         HasUnknownData = header.HasUnknownData || hasUnknownTables || hasUnknownStateMachines;

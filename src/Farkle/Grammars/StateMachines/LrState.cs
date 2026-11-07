@@ -29,7 +29,7 @@ public readonly struct LrState
     }
 
     private string DebuggerDisplay() =>
-        $"{Actions.Count + EndOfFileActions.Count} actions, {Gotos.Count} gotos{(HasConflicts ? ", has conflicts" : "")}";
+        $"{Actions.Count + EndOfFileActions.Count + (DefaultReduction.HasValue ? 1 : 0)} actions, {Gotos.Count} gotos{(HasConflicts ? ", has conflicts" : "")}";
 
     /// <summary>
     /// The terminals the <see cref="LrState"/> accepts, along
@@ -52,6 +52,16 @@ public readonly struct LrState
     /// </summary>
     /// <seealso cref="LrStateMachine.HasConflicts"/>
     public bool HasConflicts => _lr.StateHasConflicts(StateIndex);
+
+    /// <summary>
+    /// A handle to the production to reduce if this state's <see cref="Actions"/> does not
+    /// contain an action for the current terminal. The handle may not have a value if the
+    /// state does not have a default reduction.
+    /// </summary>
+    /// <remarks>
+    /// The default reduction does not apply when encountering the end of input.
+    /// </remarks>
+    public ProductionHandle DefaultReduction => _lr.GetDefaultReduction(StateIndex);
 
     /// <summary>
     /// Contains the terminals an <see cref="LrState"/> accepts,

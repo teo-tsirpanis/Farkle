@@ -75,5 +75,8 @@ internal readonly struct GrammarHeader(ushort versionMajor, ushort versionMinor,
 
     public bool IsSupported => (FileType, VersionMajor) is (GrammarFileType.Farkle, >= MinSupportedVersionMajor and <= GrammarConstants.VersionMajor);
 
-    public bool HasUnknownData => (VersionMajor, VersionMinor) is not (GrammarConstants.VersionMajor, GrammarConstants.VersionMinor);
+    public bool HasUnknownData => (VersionMajor, VersionMinor) is not (GrammarConstants.VersionMajor, <= GrammarConstants.VersionMinor);
+
+    public bool IsVersionOrGreater(ushort versionMajor, ushort versionMinor = 0) =>
+        VersionMajor > versionMajor || (VersionMajor == versionMajor && VersionMinor >= versionMinor);
 }

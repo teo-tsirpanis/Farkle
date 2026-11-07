@@ -13,7 +13,7 @@ internal static class GrammarConstants
     public const uint MaxHeapSize = (1 << 29) - 1;
 
     public const ushort VersionMajor = 7;
-    public const ushort VersionMinor = 0;
+    public const ushort VersionMinor = 1;
 
     public const ushort MinSupportedVersionMajor = 7;
 
@@ -29,6 +29,7 @@ internal static class GrammarConstants
 
     public const uint Lr1Kind = 3;
     public const uint Glr1Kind = 4;
+    public const uint Lr1DefaultReductionsKind = 10;
 
     public static ReadOnlySpan<byte> CgtHeader => "G\0O\0L\0D\0 \0P\0a\0r\0s\0e\0r\0 \0T\0a\0b\0l\0e\0s\0/\0v\01\0.\00\0\0\0"u8;
     public static ReadOnlySpan<byte> EgtHeader => "G\0O\0L\0D\0 \0P\0a\0r\0s\0e\0r\0 \0T\0a\0b\0l\0e\0s\0/\0v\05\0.\00\0\0\0"u8;

@@ -2,7 +2,14 @@
 
 This document describes the binary format of Farkle 7's grammars. It is heavily inspired by the Common Language Infrastructure metadata format described in [ECMA-335][ecma].
 
-The current version of the format is __7.0__.
+The current version of the format is __7.1__.
+
+## Version history
+
+| Version | Description |
+|---------|-------------|
+| 7.0     | Initial version. |
+| 7.1     | Added support for [LR(1) state machine default reductions](#lr1-state-machine-default-reductions) |
 
 ## Ground rules
 
@@ -358,6 +365,7 @@ The following values are defined for the __Kind__ column:
 |7|Deterministic Finite Automaton (DFA) on 8-bit character ranges with conflicts.|
 |8|Deterministic Finite Automaton (DFA) default transitions on 8-bit character ranges.|
 |9|Deterministic Finite Automaton (DFA) group start states on 8-bit character ranges.|
+|10|LR(1) state machine default reductions.|
 |_anything else_|Reserved for future use by the Farkle project.|
 
 > Instead of GLR(1) we could have called it "LR(1) state machine with conflicts" for symmetry, but this kind of state machine has an established name. Currently there are no plans to support GLR parsing in the Farkle project.
@@ -368,6 +376,7 @@ The following rules apply to the _StateMachine_ table:
 * If both state machines of __Kind__ 0 and 1, 3 and 4, or 6 and 7 exist, they MUST describe the same state machine, with their only difference being in the preferred values in case of conflicts.
 * If state machines of __Kind__ 2 or 5 exist, a state machine of __Kind__ 0 or 1 MUST also exist.
 * If state machines of __Kind__ 8 or 9 exist, a state machine of __Kind__ 6 or 7 MUST also exist.
+* If a state machine of __Kind__ 10 exists, a state machine of __Kind__ 3 or 4 MUST also exist.
 
 State machines with no states MUST be treated as if they do not exist.
 
@@ -467,7 +476,7 @@ The type `lr_action_t` is a signed integer that describes the type of an action 
 
 *
     An error action is encoded as `0`.
-    > Typically such actions are not encoded in the grammar.
+    > Typically such actions are not encoded in the grammar, unless default reductions are used.
 * A shift action to state `s` is encoded as `s + 1`.
 *
     A reduce action to the production with the index `p` is encoded as `-p`.
@@ -506,6 +515,18 @@ A GLR(1) state machine has at least one state where there at least one terminal 
     * The type `eof_action_index_t` is the smallest of one, two or four bytes that can hold the value of the `eofActionCount` field plus one.
 * The `eofAction` field's type is changed to `eof_action_t[eofActionCount]`.
 * For each state, duplicate values of the `actionTerminal` field are allowed.
+
+### LR(1) state machine default reductions
+
+To reduce the size of an LR(1) state machine, we can factor out the most common reduce actions of a state and only specify the rest of them.
+
+This state machine contains `stateCount` compressed indices to the _Production_ table, that specify the default reduction for each state. The default reduction of a state will be taken if there is no other matching action for the current input symbol. If it is zero, the parser should fail with an error if the state has no matching action for the current input symbol.
+
+The default reduction of a state does not apply when encountering the end of input. It also does not apply on conflicting actions; if a state has a conflict between its default reduction and other actions, the default reduction MUST be explicitly specified for the conflicting symbol.
+
+If no state has a default reduction, this state machine SHOULD be omitted to save space.
+
+Readers MUST fail if a grammar file with a format version lower than 7.1 contains this state machine.
 
 ## Extensibility
 

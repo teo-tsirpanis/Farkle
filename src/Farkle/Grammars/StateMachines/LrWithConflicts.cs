@@ -14,8 +14,8 @@ internal sealed class LrWithConflicts : LrImplementationBase
     internal required int FirstEofActionBase { get; init; }
 
     [SetsRequiredMembers]
-    public LrWithConflicts(Grammar grammar, int stateCount, int actionCount, int gotoCount, int eofActionCount, in GrammarTables grammarTables, GrammarFileSection lr)
-        : base(grammar, stateCount, actionCount, gotoCount, in grammarTables, true)
+    public LrWithConflicts(Grammar grammar, int stateCount, int actionCount, int gotoCount, int eofActionCount, in GrammarTables grammarTables, GrammarFileSection lr, GrammarFileSection lrDefaultReductions)
+        : base(grammar, stateCount, actionCount, gotoCount, in grammarTables, lrDefaultReductions, true)
     {
         _eofActionIndexSize = GrammarUtilities.GetCompressedIndexSize(eofActionCount);
         _eofActionCount = eofActionCount;

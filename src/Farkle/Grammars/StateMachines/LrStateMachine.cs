@@ -139,6 +139,12 @@ public abstract class LrStateMachine : IReadOnlyList<LrState>
     internal abstract int GetGoto(int state, NonterminalHandle nonterminal);
 
     /// <summary>
+    /// Gets the default reduction for a given state.
+    /// </summary>
+    /// <param name="state">The index of the state.</param>
+    internal abstract ProductionHandle GetDefaultReduction(int state);
+
+    /// <summary>
     /// Gets the enumerator of the <see cref="LrStateMachine"/>'s states.
     /// </summary>
     public Enumerator GetEnumerator() => new(this);

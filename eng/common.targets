@@ -1,4 +1,7 @@
 <Project>
+  <PropertyGroup>
+    <LangVersion Condition="'$(Language)' == 'C#'">15</LangVersion>
+  </PropertyGroup>
   <ItemGroup Condition="$(ExcludeFromCodeCoverage) == true">
     <AssemblyAttribute Include="System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverageAttribute" />
   </ItemGroup>

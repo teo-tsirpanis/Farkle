@@ -2,7 +2,6 @@
   <PropertyGroup>
     <TargetFramework>$(TargetFrameworkMain)</TargetFramework>
     <OutputType>Exe</OutputType>
-    <LangVersion>14</LangVersion>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>

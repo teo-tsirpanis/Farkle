@@ -71,7 +71,7 @@ partial struct LrBuild
             foreach (var predecessor in predecessors[annotation.StateIndex])
             {
                 var builder = new InadequacyContributionMatrix.Builder(annotation.ContributionMatrix.Count);
-                foreach (BitSet? x in annotation.ContributionMatrix)
+            NextRow: foreach (BitSet? x in annotation.ContributionMatrix)
                 {
                     if (x is not { } row)
                     {
@@ -91,8 +91,7 @@ partial struct LrBuild
                                 if (lhsContributions is null)
                                 {
                                     builder.Add(null);
-                                    // TODO-CSHARP15: Use labeled continue.
-                                    goto NextRow;
+                                    continue NextRow;
                                 }
                                 newRow = BitSet.Union(newRow, lhsContributions.Value);
                                 break;
@@ -109,7 +108,6 @@ partial struct LrBuild
                         }
                     }
                     builder.Add(newRow);
-                NextRow:;
                 }
 
                 AddAnnotation(in this, new InadequacyAnnotation(predecessor, annotation.ConflictIndex, builder.Build()));

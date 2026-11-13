@@ -2,7 +2,6 @@
   <Import Project="../NuGet.props" />
   <PropertyGroup>
     <TargetFramework>$(TargetFrameworkMain)</TargetFramework>
-    <LangVersion>14</LangVersion>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsAotCompatible>true</IsAotCompatible>

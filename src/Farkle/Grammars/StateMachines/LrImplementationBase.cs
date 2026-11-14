@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: MIT
 
 using Farkle.Buffers;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
@@ -11,8 +10,6 @@ namespace Farkle.Grammars.StateMachines;
 internal abstract class LrImplementationBase : LrStateMachine
 {
     protected readonly byte _stateIndexSize, _actionIndexSize, _gotoIndexSize, _actionSize, _eofActionSize, _tokenSymbolIndexSize, _nonterminalIndexSize, _productionIndexSize;
-
-    private Dictionary<NonterminalHandle, int>[]? _gotoLookup;
 
     protected int ActionCount { get; }
 
@@ -55,6 +52,9 @@ internal abstract class LrImplementationBase : LrStateMachine
         DefaultReductionBase = lrDefaultReductions.Offset;
     }
 
+    protected TokenSymbolHandle ReadActionTerminal(ReadOnlySpan<byte> grammarFile, int index) =>
+        new(ReadUIntVariableSizeFromArray(grammarFile, ActionTerminalBase, index, _tokenSymbolIndexSize));
+
     protected LrAction ReadAction(ReadOnlySpan<byte> grammarFile, int index) =>
         new(grammarFile.ReadIntVariableSize(ActionBase + index * _actionSize, _actionSize));
 
@@ -67,6 +67,9 @@ internal abstract class LrImplementationBase : LrStateMachine
     protected int ReadFirstGoto(ReadOnlySpan<byte> grammarFile, int state) =>
         (int)ReadUIntVariableSizeFromArray(grammarFile, FirstGotoBase, state, _gotoIndexSize);
 
+    protected NonterminalHandle ReadGotoNonterminal(ReadOnlySpan<byte> grammarFile, int index) =>
+        new(ReadUIntVariableSizeFromArray(grammarFile, GotoNonterminalBase, index, _nonterminalIndexSize));
+
     protected int ReadGoto(ReadOnlySpan<byte> grammarFile, int index) =>
         (int)ReadUIntVariableSizeFromArray(grammarFile, GotoStateBase, index, _stateIndexSize);
 
@@ -75,32 +78,6 @@ internal abstract class LrImplementationBase : LrStateMachine
 
     protected static uint ReadUIntVariableSizeFromArray(ReadOnlySpan<byte> grammarFile, int @base, int index, byte indexSize) =>
         grammarFile.ReadUIntVariableSize(@base + index * indexSize, indexSize);
-
-    internal override void PrepareForParsing()
-    {
-        Debug.Assert(!HasConflicts);
-        ReadOnlySpan<byte> grammarFile = Grammar.GrammarFile;
-
-        var gotoLookup = new Dictionary<NonterminalHandle, int>[Count];
-        for (int i = 0; i < gotoLookup.Length; i++)
-        {
-            var dict = new Dictionary<NonterminalHandle, int>();
-            (int gotoOffset, int gotoCount) = GetGotoBoundsUnsafe(grammarFile, i);
-            for (int j = 0; j < gotoCount; j++)
-            {
-                ((ICollection<KeyValuePair<NonterminalHandle, int>>)dict).Add(GetGotoAtUnsafe(grammarFile, gotoOffset + j));
-            }
-            gotoLookup[i] = dict;
-        }
-        _gotoLookup = gotoLookup;
-    }
-
-    internal sealed override int GetGoto(int state, NonterminalHandle nonterminal)
-    {
-        Debug.Assert(_gotoLookup is not null, "PrepareForParsing has not been called.");
-
-        return _gotoLookup[state][nonterminal];
-    }
 
     protected (int Offset, int Count) GetActionBoundsUnsafe(ReadOnlySpan<byte> grammarFile, int state)
     {
@@ -111,21 +88,21 @@ internal abstract class LrImplementationBase : LrStateMachine
 
     protected KeyValuePair<TokenSymbolHandle, LrAction> GetActionAtUnsafe(ReadOnlySpan<byte> grammarFile, int index)
     {
-        TokenSymbolHandle terminal = new(ReadUIntVariableSizeFromArray(grammarFile, ActionTerminalBase, index, _tokenSymbolIndexSize));
+        TokenSymbolHandle terminal = ReadActionTerminal(grammarFile, index);
         LrAction action = ReadAction(grammarFile, index);
         return new(terminal, action);
     }
 
-    private (int Offset, int Count) GetGotoBoundsUnsafe(ReadOnlySpan<byte> grammarFile, int state)
+    protected (int Offset, int Count) GetGotoBoundsUnsafe(ReadOnlySpan<byte> grammarFile, int state)
     {
         int gotoOffset = ReadFirstGoto(grammarFile, state);
         int nextGotoOffset = state != Count - 1 ? ReadFirstGoto(grammarFile, state + 1) : GotoCount;
         return (gotoOffset, nextGotoOffset - gotoOffset);
     }
 
-    private KeyValuePair<NonterminalHandle, int> GetGotoAtUnsafe(ReadOnlySpan<byte> grammarFile, int index)
+    protected KeyValuePair<NonterminalHandle, int> GetGotoAtUnsafe(ReadOnlySpan<byte> grammarFile, int index)
     {
-        NonterminalHandle nonterminal = new(ReadUIntVariableSizeFromArray(grammarFile, GotoNonterminalBase, index, _nonterminalIndexSize));
+        NonterminalHandle nonterminal = ReadGotoNonterminal(grammarFile, index);
         int state = ReadGoto(grammarFile, index);
         return new(nonterminal, state);
     }
@@ -251,7 +228,10 @@ internal abstract class LrImplementationBase : LrStateMachine
         {
             for (int i = 0; i < Count; i++)
             {
-                grammarTables.ValidateHandle(GetDefaultReduction(i));
+                if (ReadDefaultReduction(grammarFile, i) is { HasValue: true } prod)
+                {
+                    grammarTables.ValidateHandle(GetDefaultReduction(i));
+                }
             }
         }
 

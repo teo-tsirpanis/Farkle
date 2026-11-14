@@ -19,6 +19,7 @@ internal readonly struct DefaultParserImplementation<TChar>
 {
     public Grammar Grammar { get; }
     private readonly LrWithoutConflicts _lrStateMachine;
+    private readonly LrWithoutConflicts.OptimizedLookup _lrLookup;
 
     public ISemanticProvider<TChar> SemanticProvider { get; init; }
     public Tokenizer<TChar> Tokenizer { get; init; }
@@ -28,7 +29,7 @@ internal readonly struct DefaultParserImplementation<TChar>
     {
         Grammar = grammar;
         _lrStateMachine = lrStateMachine;
-        _lrStateMachine.PrepareForParsing();
+        _lrLookup = lrStateMachine.GetOptimizedLookup();
         SemanticProvider = semanticProvider;
         Tokenizer = tokenizer;
     }
@@ -38,7 +39,7 @@ internal readonly struct DefaultParserImplementation<TChar>
     {
         int membersLength = hotData.GetProductionMemberCount(production);
         int goFromState = stateStack.Peek(membersLength);
-        int gotoState = _lrStateMachine.GetGoto(goFromState, hotData.GetProductionHead(production));
+        int gotoState = _lrLookup.GetGoto(goFromState, hotData.GetProductionHead(production));
         object? semanticValue = SemanticProvider.Fuse(ref input.State, production, semanticValueStack.PeekMany(membersLength));
         semanticValueStack.PopMany(membersLength);
         semanticValueStack.Push(semanticValue);
@@ -70,7 +71,7 @@ internal readonly struct DefaultParserImplementation<TChar>
             int membersLength = hotData.GetProductionMemberCount(reduceProduction);
             if (membersLength == 0)
             {
-                int gotoState = _lrStateMachine.GetGoto(currentState, hotData.GetProductionHead(reduceProduction));
+                int gotoState = _lrLookup.GetGoto(currentState, hotData.GetProductionHead(reduceProduction));
                 stateStack.Push(gotoState);
                 currentState = gotoState;
             }
@@ -87,7 +88,7 @@ internal readonly struct DefaultParserImplementation<TChar>
                     goFromStateIndex = virtualPoppedCount + membersLength;
                 }
                 int goFromState = stateStack.Peek(goFromStateIndex);
-                int gotoState = _lrStateMachine.GetGoto(goFromState, hotData.GetProductionHead(reduceProduction));
+                int gotoState = _lrLookup.GetGoto(goFromState, hotData.GetProductionHead(reduceProduction));
                 currentState = gotoState;
                 int statesToPop = membersLength - 1;
                 // First pop from the extra pushed states, then virtually pop what was left.
@@ -98,7 +99,7 @@ internal readonly struct DefaultParserImplementation<TChar>
                 }
                 virtualPoppedCount += statesToPop;
             }
-            action = _lrStateMachine.GetAction(currentState, symbol);
+            action = _lrLookup.GetAction(currentState, symbol);
             if (!action.IsReduce)
             {
                 break;
@@ -118,42 +119,25 @@ internal readonly struct DefaultParserImplementation<TChar>
     {
         var builder = ImmutableArray.CreateBuilder<string?>();
         int state = stateStack.Peek();
-        if (Options.EnableLookaheadCorrection && _lrStateMachine[state].DefaultReduction.HasValue)
+        var defaultAction = _lrLookup.GetDefaultAction(state);
+        foreach (var terminal in Grammar.Terminals)
         {
-            foreach (var terminal in Grammar.Terminals)
+            if ((terminal.Attributes & TokenSymbolAttributes.Hidden) != 0)
             {
-                if ((terminal.Attributes & TokenSymbolAttributes.Hidden) != 0)
-                {
-                    continue;
-                }
-                var action = _lrStateMachine.GetAction(state, terminal.Handle);
-                if (action.IsError)
-                {
-                    continue;
-                }
-                if (action.IsShift)
-                {
-                    builder.Add(terminal.Name);
-                }
-                else if (action.IsReduce && (!Options.EnableLookaheadCorrection || TrySpeculativeReduce(in hotData, ref stateStack, terminal.Handle, action.ReduceProduction)))
-                {
-                    builder.Add(terminal.Name);
-                }
+                continue;
             }
-        }
-        else
-        {
-            foreach (var action in _lrStateMachine[state].Actions)
+            var action = _lrLookup.GetAction(state, terminal.Handle);
+            if (action.IsError)
             {
-                if ((action.Key.Attributes & TokenSymbolAttributes.Hidden) != 0)
-                {
-                    continue;
-                }
-                if (action.Value.IsError)
-                {
-                    continue;
-                }
-                builder.Add(action.Key.Name);
+                continue;
+            }
+            if (action.IsShift)
+            {
+                builder.Add(terminal.Name);
+            }
+            else if (action.IsReduce && (Options.EnableLookaheadCorrection ? TrySpeculativeReduce(in hotData, ref stateStack, terminal.Handle, action.ReduceProduction) : !defaultAction.Equals(action)))
+            {
+                builder.Add(terminal.Name);
             }
         }
         if (_lrStateMachine[state].EndOfFileActions.Count > 0)
@@ -189,7 +173,7 @@ internal readonly struct DefaultParserImplementation<TChar>
                     return RunResult.NeedsMoreInput;
                 }
             RetryEof:
-                LrEndOfFileAction eofAction = _lrStateMachine.GetEndOfFileAction(currentState);
+                LrEndOfFileAction eofAction = _lrLookup.GetEndOfFileAction(currentState);
                 if (eofAction.IsAccept)
                 {
                     result = semanticValueStack.Peek();
@@ -218,7 +202,7 @@ internal readonly struct DefaultParserImplementation<TChar>
             {
                 bool performLac = Options.EnableLookaheadCorrection;
             RetryToken:
-                LrAction action = _lrStateMachine.GetAction(currentState, token.Symbol);
+                LrAction action = _lrLookup.GetAction(currentState, token.Symbol);
                 if (action.IsShift)
                 {
                     currentState = action.ShiftState;

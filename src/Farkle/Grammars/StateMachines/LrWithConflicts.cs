@@ -46,12 +46,6 @@ internal sealed class LrWithConflicts : LrImplementationBase
         GotoStateBase = GotoNonterminalBase + gotoCount * _nonterminalIndexSize;
     }
 
-    internal override LrAction GetAction(int state, TokenSymbolHandle terminal) =>
-        throw CreateHasConflictsException();
-
-    internal override LrEndOfFileAction GetEndOfFileAction(int state) =>
-        throw CreateHasConflictsException();
-
     private int ReadFirstEofAction(ReadOnlySpan<byte> grammarFile, int state) =>
         (int)ReadUIntVariableSizeFromArray(grammarFile, FirstEofActionBase, state, _eofActionIndexSize);
 
@@ -75,9 +69,6 @@ internal sealed class LrWithConflicts : LrImplementationBase
 
         return (firstEofAction, nextFirstEofAction - firstEofAction);
     }
-
-    private static NotSupportedException CreateHasConflictsException() =>
-        new("State machine has conflicts.");
 
     internal override void ValidateContent(ReadOnlySpan<byte> grammarFile, in GrammarTables grammarTables)
     {

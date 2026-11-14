@@ -137,15 +137,18 @@ let recreateSyntaxFromGrammar (g: Grammar) =
         |> Seq.map (fun prod -> prod.Members |> Seq.fold (fun pb x -> pb .>> getSymbol x) empty)
         |> Array.ofSeq
         |> setProductionsU nonterminals[idx])
-    let parser =
+    let grammar =
         nonterminals[g.GrammarInfo.StartSymbol.Handle.Value]
             .AutoWhitespace(false)
             .WithGrammarName(g.GrammarInfo.Name)
             .WithDefaultReductions(DefaultReductionsOption.None)
-            .BuildSyntaxCheck()
-    if parser.IsFailing then
-        failtestf "Failed to build: %O" (parser.Parse "")
-    parser.GetGrammar()
+            // We don't build a parser because constructing the optimized lookup tables takes
+            // a lot of time with default reductions disabled.
+            .BuildSyntaxCheck(BuilderOutputs.GrammarLrStateMachine)
+            .Grammar
+    if grammar.LrStateMachine.HasConflicts then
+        failtest "The recreated grammar has conflicts"
+    grammar
 
 [<Tests>]
 let farkleGOLDGrammarEquivalenceTests =

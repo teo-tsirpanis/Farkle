@@ -1,5 +1,8 @@
 #### 7.2.0
+* Added support for separately encoding the most common reduction of an LR(1) state. This can reduce the size of grammar files. It is enabled by default.
+* Added support for lookahead correction. It is enabled by default.
 * Removed support for .NET 8 and .NET 9. Farkle now requires .NET 10 or later.
+* Improved performance of the parser.
 
 #### 7.1.1 - 12-10-2026
 * Fixed a bug where suppressing the [IDE0051 warning](https://learn.microsoft.com/en-us/dotnet/fundamentals/code-analysis/style-rules/ide0051) for precompiler input methods does not happen on Visual Basic projects.

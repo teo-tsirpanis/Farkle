@@ -5,7 +5,7 @@ namespace Farkle.Parser;
 
 internal readonly struct ParserOptions : IEquatable<ParserOptions>
 {
-    public bool EnableLookaheadCorrection { get; init; } = false;
+    public bool EnableLookaheadCorrection { get; init; } = true;
 
     public ParserOptions() { }
 

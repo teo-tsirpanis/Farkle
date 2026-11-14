@@ -227,12 +227,12 @@ public abstract class CharParser<T> : IParser<char, T>
     /// <para>
     /// Lookahead correction is a mechanism that mitigates these issues. When it is enabled, the
     /// parser will check that reducing a token will not lead to a syntax error, before actually
-    /// performing the reduction and executing any semantic actions. It is disabled by default.
+    /// performing the reduction and executing any semantic actions. It is enabled by default.
     /// </para>
     /// <para>
-    /// You must enable lookahead correction if your grammar contains default reductions and terminals
-    /// with the <see cref="TokenSymbolAttributes.Noise"/> attribute. Otherwise, it will lead to
-    /// incorrect parsing behavior.
+    /// You can disable lookahead correction to get small performance improvements, but if your
+    /// grammar contains terminals with the <see cref="TokenSymbolAttributes.Noise"/> attribute,
+    /// disabling it can lead to incorrect parsing behavior.
     /// </para>
     /// </remarks>
     public CharParser<T> WithLookaheadCorrection(bool value)

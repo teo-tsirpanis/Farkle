@@ -44,7 +44,7 @@ internal sealed class LrStateProxy
         }
         if (defaultReduction.HasValue)
         {
-            string name = i > 0 ? "In all other cases" : "Always";
+            string name = i > 0 ? "Any other terminal" : "Any terminal";
             _actions[i++] = new NameValuePair(name, LrAction.CreateReduce(defaultReduction).ToString(grammar));
         }
         Debug.Assert(i == _actions.Length);

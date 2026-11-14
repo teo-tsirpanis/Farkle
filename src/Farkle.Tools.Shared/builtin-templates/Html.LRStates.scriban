@@ -9,6 +9,8 @@ https://opensource.org/licenses/MIT -}}
 <td class="lr-shift{{$conflicting}}">Shift to <a href="#lr{{$0.shift_state}}">State {{$0.shift_state}}</a></td>
 {{~else if $0.is_reduce; $prod = grammar.get_object_from_handle $0.reduce_production~}}
 <td class="lr-reduce{{$conflicting}}">Reduce <a href="#prod{{$prod.handle.value}}">{{html.escape $prod}}</a></td>
+{{~else if $0.is_error~}}
+<td class="lr-fail{{$conflicting}}">Error</td>
 {{~else~}}
 <td class="lr-accept">Accept</td>
 {{~end~}}
@@ -72,6 +74,13 @@ https://opensource.org/licenses/MIT -}}
                     <td rowspan="{{array.size $eofactions}}"><abbr class="eof" title="End of File">EOF</abbr></td>
                     {{~end~}}
                     {{gen_eofaction_row $action $has_eof_conflicts~}}
+                </tr>
+                {{~end~}}
+                {{~if $state.default_reduction.has_value
+                    $default_action = {is_reduce: true, reduce_production: $state.default_reduction}~}}
+                <tr>
+                    <td class="lr-default-reduction">{{if $state.actions.empty?}}Any terminal{{else}}Any other terminal{{end}}</td>
+                    {{gen_action_row $default_action false}}
                 </tr>
                 {{~end~}}
                 {{~for $action in $state.gotos~}}

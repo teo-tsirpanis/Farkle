@@ -62,6 +62,7 @@ a:active {
 }
 
 .eof,
+.lr-default-reduction,
 .dfa-anything-else,
 .production-empty,
 .special-char {
@@ -134,6 +135,7 @@ table {
     background-color: #5cc1ff;
 }
 
+.lr-fail,
 .dfa-fail {
     background-color: #d33f49;
 }

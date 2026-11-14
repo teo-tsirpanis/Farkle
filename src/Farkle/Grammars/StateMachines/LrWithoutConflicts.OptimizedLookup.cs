@@ -29,7 +29,6 @@ internal partial class LrWithoutConflicts
         {
             var grammarFile = lr.Grammar.GrammarFile;
             var stateIndices = new int[lr.Count];
-            var assignedOffsets = new HashSet<int>(lr.Count);
             for (int i = 0; i < stateIndices.Length; i++)
             {
                 stateIndices[i] = i;
@@ -45,6 +44,7 @@ internal partial class LrWithoutConflicts
 
                 _actionOffsets = new int[lr.Count];
                 var stateDict = new Dictionary<int, int>(lr.Count, new StateActionComparer(lr));
+            var assignedOffsets = new HashSet<int>(lr.Count);
                 var actions = new List<LrAction>();
                 var terminals = new List<TokenSymbolHandle>();
                 _defaultActions = new LrAction[lr.Count];
@@ -94,6 +94,9 @@ internal partial class LrWithoutConflicts
                                 break;
                             }
                         }
+                        // Two states with different actions must not have the same offset.
+                        // Otherwise, each state's actions could spill into the other, leading
+                        // to false positives.
                         if (offsetIsValid && !assignedOffsets.Add(offset - firstTerminal))
                         {
                             offsetIsValid = false;
@@ -129,7 +132,6 @@ internal partial class LrWithoutConflicts
 
                 _gotoOffsets = new int[lr.Count];
                 var stateDict = new Dictionary<int, int>(lr.Count, new StateGotoComparer(lr));
-                assignedOffsets.Clear();
                 var gotos = new List<int>();
                 var occupiedSlots = new List<bool>();
                 foreach (int state in stateIndices)
@@ -167,10 +169,8 @@ internal partial class LrWithoutConflicts
                                 break;
                             }
                         }
-                        if (offsetIsValid && assignedOffsets.Add(offset))
-                        {
-                            stateDict[state] = offset;
-                        }
+                        // We don't need to track duplicate goto offsets, because a GOTO from
+                        // a state to an unexpected nonterminal isn't supposed to happen.
                     }
 
                     offset -= firstNonterminal;
@@ -239,7 +239,7 @@ internal partial class LrWithoutConflicts
             int offset = _gotoOffsets[state];
             int index = offset + (int)nonterminal.TableIndex - 1;
             // We don't need a check table for gotos because assuming the state machine is well-formed,
-            // each state will have a fixed set of symbols it can use to go to.
+            // each state will have a fixed set of nonterminals it will use to go to.
             return _gotos[index];
         }
 

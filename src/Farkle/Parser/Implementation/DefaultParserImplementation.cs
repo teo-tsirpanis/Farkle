@@ -63,8 +63,9 @@ internal readonly struct DefaultParserImplementation<TChar>
         int currentState = stateStack.Peek();
         // The number of items that were on the stack in the beginning. We must not pop beyond this point.
         int originalStackCount = stateStack.Count;
-        // The number of items that we have non-destructively popped beyond the original stack count.
-        int virtualPoppedCount = 0;
+        // The number of items that we have non-destructively popped from the original stack.
+        // We start with the top state popped, since we track it separately in currentState.
+        int virtualPoppedCount = 1;
         LrAction action;
         while (true)
         {
@@ -72,7 +73,7 @@ internal readonly struct DefaultParserImplementation<TChar>
             if (membersLength == 0)
             {
                 int gotoState = _lrLookup.GetGoto(currentState, hotData.GetProductionHead(reduceProduction));
-                stateStack.Push(gotoState);
+                stateStack.Push(currentState);
                 currentState = gotoState;
             }
             else
@@ -87,15 +88,18 @@ internal readonly struct DefaultParserImplementation<TChar>
                 {
                     goFromStateIndex = virtualPoppedCount + membersLength;
                 }
-                int goFromState = stateStack.Peek(goFromStateIndex);
+                // Subtract one from the index to peek, to account for the top being
+                // tracked separately.
+                int goFromState = stateStack.Peek(goFromStateIndex - 1);
                 int gotoState = _lrLookup.GetGoto(goFromState, hotData.GetProductionHead(reduceProduction));
                 currentState = gotoState;
                 int statesToPop = membersLength - 1;
                 // First pop from the extra pushed states, then virtually pop what was left.
-                if (statesToPop >= extraPushedCount)
+                if (extraPushedCount > 0)
                 {
-                    stateStack.PopMany(extraPushedCount);
-                    statesToPop -= extraPushedCount;
+                    int extraStatesToPop = Math.Min(extraPushedCount, statesToPop);
+                    stateStack.PopMany(extraStatesToPop);
+                    statesToPop -= extraStatesToPop;
                 }
                 virtualPoppedCount += statesToPop;
             }

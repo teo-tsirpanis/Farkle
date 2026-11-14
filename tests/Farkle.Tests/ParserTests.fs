@@ -188,4 +188,42 @@ let tests = testList "Parser tests" [
         | ParserDiagnostic(TextPosition(4, 4), LexicalError(ValueSome "hell")) -> ()
         | _ -> failtest $"Unexpected parser error {error}"
     }
+
+    test "LAC does not run semantic actions before reporting a syntax error" {
+        let mutable ranFuser = false
+        let parser =
+            let N = "N" |||= [empty]
+            "S" |||= [!% N .>> "a" .>> "b"]
+            |> _.WithDefaultReductions(DefaultReductionsOption.All)
+            |> GrammarBuilder.buildSyntaxCheck
+            |> _.WithSemanticProvider({new ISemanticProvider<char, unit> with
+                member _.Transform(_, _, _) = ()
+                member _.Fuse(_, _, _) = ranFuser <- true; ()})
+            |> _.WithLookaheadCorrection(true)
+        match parser.Parse "b" with
+        | ParserError(ParserDiagnostic(_, SyntaxError _)) -> Expect.isFalse ranFuser "Semantic actions should not run with LAC enabled"
+        | x -> failtest $"Unexpected result when parsing with LAC: {x}"
+        let parserWithoutLac = parser.WithLookaheadCorrection false
+        match parserWithoutLac.Parse "b" with
+        | ParserError(ParserDiagnostic(_, SyntaxError _)) -> Expect.isTrue ranFuser "Semantic actions should not run without LAC"
+        | x -> failtest $"Unexpected result when parsing without LAC: {x}"
+    }
+
+    test "LAC produces correct expected symbols" {
+        let parser =
+            let N = "N" |||= [empty]
+            "S" |||= [!% N .>> "a"; !% N .>> "b"]
+            |> _.WithDefaultReductions(DefaultReductionsOption.All)
+            |> GrammarBuilder.buildSyntaxCheck
+            |> _.WithLookaheadCorrection(true)
+        match parser.Parse "" with
+        | ParserError(ParserDiagnostic(_, SyntaxError(errors, ValueNone))) ->
+            Expect.sequenceEqual errors [ValueSome "a"; ValueSome "b"] "Unexpected expected symbols"
+        | x -> failtest $"Unexpected result when parsing with LAC: {x}"
+        let parserWithoutLac = parser.WithLookaheadCorrection false
+        match parserWithoutLac.Parse "" with
+        | ParserError(ParserDiagnostic(_, SyntaxError(errors, ValueNone))) ->
+            Expect.isEmpty errors "Unexpected expected symbols"
+        | x -> failtest $"Unexpected result when parsing without LAC: {x}"
+    }
 ]

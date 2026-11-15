@@ -158,6 +158,8 @@ internal static class GoldGrammarConverter
                         break;
                 }
             }
+            var mostCommonReduction = actions.Where(x => x.Kind == LalrActionKind.Reduce).CountBy(x => x.TargetIndex).Select(x => new Tuple<ushort, int>(x.Key, x.Value)).MaxBy(x => x.Item2);
+            // lr.FinishState(mostCommonReduction is { Item1: var target } ? productionMapping[target] : default);
             lr.FinishState();
         }
         if (lr.HasConflicts)

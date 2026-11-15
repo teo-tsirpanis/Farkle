@@ -14,7 +14,7 @@ namespace Farkle.Benchmarks;
 [MemoryDiagnoser, GroupBenchmarksBy(BenchmarkLogicalGroupRule.ByCategory)]
 public class GrammarReaderBenchmark
 {
-    [Params("JSON", "COBOL85")] public string Grammars { get; set; }
+    [Params("JSON", "COBOL85", "COBOL85-default-reductions")] public string Grammars { get; set; }
 
     private byte[] Egt;
 
@@ -23,7 +23,7 @@ public class GrammarReaderBenchmark
     [GlobalSetup]
     public void GlobalSetup()
     {
-        Egt = File.ReadAllBytes($"resources/{Grammars}.egt");
+        // Egt = File.ReadAllBytes($"resources/{Grammars}.egt");
         Farkle7Grammar = ImmutableCollectionsMarshal.AsImmutableArray(File.ReadAllBytes($"resources/{Grammars}.grammar.dat"));
     }
 
@@ -35,7 +35,11 @@ public class GrammarReaderBenchmark
     public object ReadFarkle7NoValidation() =>
         Grammar.LoadUnsafe(Farkle7Grammar);
 
-    [BenchmarkCategory("Convert"), Benchmark(Baseline = true)]
-    public object ConvertFarkle7() =>
-        Grammar.ConvertFromGoldParser(new MemoryStream(Egt, false));
+    [BenchmarkCategory("Read"), Benchmark]
+    public object CreateParserNoValidation() =>
+        CharParser.CreateSyntaxChecker(Grammar.LoadUnsafe(Farkle7Grammar));
+
+    // [BenchmarkCategory("Convert"), Benchmark(Baseline = true)]
+    // public object ConvertFarkle7() =>
+    //     Grammar.ConvertFromGoldParser(new MemoryStream(Egt, false));
 }

@@ -6,10 +6,13 @@ The current version of the format is __7.1__.
 
 ## Version history
 
-| Version | Description |
-|---------|-------------|
-| 7.0     | Initial version. |
-| 7.1     | Added support for [LR(1) state machine default reductions](#lr1-state-machine-default-reductions) |
+### Version 7.1
+
+* Added support for [LR(1) state machine default reductions](#lr1-state-machine-default-reductions).
+
+### Version 7.0
+
+Initial version.
 
 ## Ground rules
 

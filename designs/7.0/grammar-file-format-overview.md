@@ -63,3 +63,4 @@ Now that Farkle 7's development has reached a point where it can write grammars,
 |EGT (GOLD Parser 5.x)|2011|groups, compact character sets|4683 bytes (-96,5%)|612511 bytes (-1.1%)|
 |EGTneo (Farkle 6)|2020|streamlined encoding, DFA default transitions|2304 bytes (-50.8%)|478273 bytes (-21.9%)|
 |Farkle 7|2023|an entirely different format, designed for random access and future extensibility|1360 bytes (-41%)|305255 bytes (-36.2%)|
+|Farkle 7.2|2026|LR default reductions|1320 bytes (-2.9%)|151757 bytes (-50.3%)|
